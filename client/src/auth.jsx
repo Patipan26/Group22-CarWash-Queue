@@ -23,12 +23,21 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function googleLogin(credential) {
+    const data = await api('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential })
+    });
+    setUser(data.user);
+    return data.user;
+  }
+
   async function logout() {
     await api('/auth/logout', { method: 'POST' });
     setUser(null);
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

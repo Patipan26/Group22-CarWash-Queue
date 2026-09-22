@@ -61,6 +61,70 @@ docker compose down
 
 ข้อมูล MySQL และไฟล์สลิปจะอยู่ใน Docker volumes จึงไม่หายเมื่อหยุด container ปกติ
 
+## Deploy หน้าเว็บด้วย Vercel และใช้ Express + MySQL ของเราเอง
+
+ไฟล์ `client/vercel.json` เตรียมค่า Build และการเปิดหน้า React Router ให้แล้ว โดยตั้งค่าใน Vercel ดังนี้:
+
+1. Import repository `Patipan26/carwash-queue` เข้า Vercel
+2. ตั้ง **Root Directory** เป็น `client`
+3. ตั้งค่า Environment Variable:
+
+```text
+VITE_API_URL=https://โดเมนของ-Express/api
+VITE_GOOGLE_CLIENT_ID=เลข Client ID ของ Google
+```
+
+4. Deploy แล้วจด URL ของหน้าเว็บ เช่น `https://carwash-queue.vercel.app`
+5. ฝั่ง Express ตั้งค่า `CLIENT_ORIGIN` ให้ตรงกับ URL ของ Vercel
+6. หาก Express อยู่คนละโดเมนกับ Vercel ต้องเปิด HTTPS และตั้ง `NODE_ENV=production` เพื่อให้ session cookie ทำงานข้ามโดเมนได้
+
+ตัวอย่างค่าฝั่ง Express:
+
+```text
+NODE_ENV=production
+CLIENT_ORIGIN=https://carwash-queue.vercel.app
+```
+
+ถ้าใช้ Docker รัน Express และ MySQL บนเครื่อง/Server ของเรา ให้ใส่ค่าข้างต้นในไฟล์ `.env` ที่อยู่โฟลเดอร์ราก แล้วเริ่มเฉพาะ API กับฐานข้อมูลได้ด้วย:
+
+```powershell
+Copy-Item '.env.docker.example' '.env'
+notepad '.env'
+docker compose up -d --build db api
+```
+
+อย่าใช้ `CLIENT_ORIGIN=http://localhost:...` กับหน้าเว็บที่อยู่บน Vercel เพราะ Vercel จะเรียก `localhost` จากเครื่องของผู้เปิดเว็บ ไม่ใช่เครื่องที่รัน Express
+
+Vercel ใช้สำหรับ Frontend เท่านั้น ส่วน Express ต้องรันบน Server/VPS/บริการ Backend ที่เข้าถึงได้จากอินเทอร์เน็ต และ MySQL ต้องอยู่บนเครื่องหรือบริการฐานข้อมูลที่ Express เชื่อมต่อได้ ห้ามใส่รหัสผ่านฐานข้อมูลใน Vercel ฝั่ง `VITE_*` เพราะตัวแปรเหล่านี้ถูกส่งไปอยู่ใน JavaScript ของผู้ใช้
+
+## Google Login
+
+ระบบใช้ Google Identity Services และให้ Express ตรวจสอบ ID token ก่อนออก cookie ของระบบเอง ไม่ใช้ Firebase
+
+1. สร้าง OAuth 2.0 Client ID แบบ **Web application** ใน Google Cloud
+2. เพิ่ม Authorized JavaScript origins สำหรับ URL ที่ใช้ทดสอบ เช่น `http://localhost:5174` และ URL Vercel จริง
+3. ใส่ Client ID ใน `client/.env` และ `server/.env`:
+
+```text
+# client/.env
+VITE_GOOGLE_CLIENT_ID=เลข Client ID ของ Google
+
+# server/.env
+GOOGLE_CLIENT_ID=เลข Client ID เดียวกัน
+```
+
+ถ้าใช้ Docker ให้ใส่ `GOOGLE_CLIENT_ID` ในไฟล์ `.env` ที่โฟลเดอร์รากไฟล์เดียว แล้ว Docker จะส่งค่าเดียวกันให้ทั้ง API และหน้าเว็บตอน Build
+
+4. ถ้าใช้ฐานข้อมูลเดิม ให้รัน migration Google Login ครั้งเดียว:
+
+```powershell
+Get-Content '.\database\migrations\003_google_auth.sql' | docker exec -i carwash-mysql mysql -ucarwash -pcarwash_dev_password carwash_queue
+```
+
+5. Restart API และ Frontend แล้วทดสอบปุ่ม Google ในหน้าเข้าสู่ระบบ
+
+Client ID เป็นข้อมูลที่ฝั่งหน้าเว็บใช้ได้ แต่ห้ามเปิดเผยค่า `JWT_SECRET` หรือรหัสผ่านฐานข้อมูล Google จะส่ง ID token กลับมาให้หน้าเว็บ และ Backend จะตรวจสอบลายเซ็น, ผู้ให้บริการ, อายุ token และ Client ID ก่อนสร้าง/เชื่อมบัญชีใน MySQL ตามแนวทาง Google ([การตรวจสอบ Google ID token](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token))
+
 หลังสมัครบัญชีลูกค้าแล้ว หากต้องการกำหนดบัญชีเป็นแอดมิน ให้รัน SQL นี้โดยเปลี่ยนอีเมลให้ตรงกับบัญชี:
 
 ```sql

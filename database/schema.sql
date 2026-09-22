@@ -9,10 +9,12 @@ USE carwash_queue;
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   email VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
+  password_hash VARCHAR(255) NULL,
+  google_id VARCHAR(255) NULL,
   name VARCHAR(120) NULL,
   phone VARCHAR(30) NULL,
   role ENUM('customer', 'admin') NOT NULL DEFAULT 'customer',
+  UNIQUE KEY uq_users_google_id (google_id),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

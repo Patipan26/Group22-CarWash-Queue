@@ -30,12 +30,6 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-slate-900 flex flex-col">
-      <div className="hidden bg-[#0b1f3a] text-slate-300 md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-2 text-[11px] tracking-wide">
-          <span>CARWASH QUEUE SYSTEM</span>
-          <span>เปิดบริการทุกวัน 09:00 - 16:00 น.</span>
-        </div>
-      </div>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-5 px-5">
           <Link to="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
