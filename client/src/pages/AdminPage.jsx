@@ -45,6 +45,11 @@ function formatMoney(value) {
   return `฿${Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function paymentStatusText(booking) {
+  if (booking.paymentStatus === 'pending_review' && booking.paymentMethod === 'cash') return 'รอยืนยันรับเงินสด';
+  return paymentLabels[booking.paymentStatus] || booking.paymentStatus;
+}
+
 function formatThaiDateTime(value) {
   if (!value) return '-';
   const date = new Date(value);
@@ -364,9 +369,9 @@ export default function AdminPage() {
                         {nextStatus[item.status] && item.paymentStatus !== 'verified' && <span className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">ยืนยันการชำระเงินก่อนดำเนินงาน</span>}
                         {!['completed', 'cancelled'].includes(item.status) && <button type="button" disabled={updatingBookingId === item.id} onClick={() => setPendingConfirmation({ type: 'cancel-booking', booking: item })} className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60">ยกเลิกการจอง</button>}
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-2">ชำระเงิน: {paymentLabels[item.paymentStatus] || item.paymentStatus}</div>
+                      <div className="mt-2 text-[11px] text-slate-400">ชำระเงิน: {paymentStatusText(item)}<span className="ml-2">· ช่องทาง: {item.paymentMethod === 'cash' ? 'เงินสด' : 'พร้อมเพย์ / QR'}</span></div>
                       {(item.slipPath || Number(item.slipVerificationCount) > 0) && <div className="mt-2 flex flex-wrap gap-2">{item.slipPath && <button type="button" onClick={() => openPrivateFile(`/admin/bookings/${item.id}/slip`)} className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"><Icon name="eye" size={14} />ดูสลิป</button>}{Number(item.slipVerificationCount) > 0 && <button type="button" onClick={() => openSlipHistory(item)} className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"><Icon name="clock" size={14} />ประวัติผลตรวจ<span className="ml-0.5 rounded-full bg-indigo-200 px-1.5 py-0.5 text-[10px] leading-none text-indigo-800">{item.slipVerificationCount}</span></button>}</div>}
-                      {item.paymentStatus === 'pending_review' && item.status !== 'cancelled' && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={updatingPaymentId === item.id} onClick={() => updatePaymentStatus(item, 'verified')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{updatingPaymentId === item.id ? 'กำลังบันทึก...' : 'อนุมัติชำระเงิน'}</button><button type="button" disabled={updatingPaymentId === item.id} onClick={() => setPendingConfirmation({ type: 'reject-slip', booking: item })} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">ปฏิเสธสลิป</button></div>}
+                      {item.paymentStatus === 'pending_review' && item.status !== 'cancelled' && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={updatingPaymentId === item.id} onClick={() => updatePaymentStatus(item, 'verified')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{updatingPaymentId === item.id ? 'กำลังบันทึก...' : item.paymentMethod === 'cash' ? 'ยืนยันรับเงินสด' : 'อนุมัติชำระเงิน'}</button>{item.paymentMethod !== 'cash' && <button type="button" disabled={updatingPaymentId === item.id} onClick={() => setPendingConfirmation({ type: 'reject-slip', booking: item })} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">ปฏิเสธสลิป</button>}</div>}
                     </td>
                   </tr>
                 ))}

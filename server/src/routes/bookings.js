@@ -378,6 +378,7 @@ router.get('/me', authenticate, async (req, res, next) => {
               COALESCE(NULLIF(b.amount_due, 0), b.total_price) AS totalPrice,
               b.total_price AS subtotal, b.discount_amount AS discountAmount, b.vat_amount AS vatAmount,
               b.status, b.payment_status AS paymentStatus,
+              b.payment_method AS paymentMethod,
               b.slip_path AS slipPath, s.name AS service
        FROM bookings b JOIN services s ON s.id = b.service_id
        WHERE b.user_id = ? ORDER BY b.created_at DESC`,
@@ -537,15 +538,11 @@ router.patch('/:code/reschedule', authenticate, async (req, res, next) => {
 
 router.post('/:code/payment', authenticate, upload.single('slip'), async (req, res, next) => {
   try {
+    const paymentMethod = req.body.paymentMethod === 'cash' ? 'cash' : 'promptpay';
     const promoCode = String(req.body.promoCode || '').trim().toUpperCase();
     if (promoCode && promoCode !== 'PROMO10') {
       await removeUploadedFile(req.file);
       return res.status(400).json({ message: 'โค้ดส่วนลดไม่ถูกต้อง' });
-    }
-    if (!req.file) return res.status(400).json({ message: 'กรุณาแนบสลิปการโอนเงิน' });
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(req.file.mimetype)) {
-      await removeUploadedFile(req.file);
-      return res.status(422).json({ message: 'กรุณาแนบรูปสลิปที่มี QR Code (JPG, PNG หรือ WEBP)' });
     }
     const [rows] = await pool.query(
       `SELECT id, total_price AS subtotal, payment_status AS paymentStatus, status
@@ -562,13 +559,62 @@ router.post('/:code/payment', authenticate, upload.single('slip'), async (req, r
     }
     if (rows[0].status === 'cancelled') {
       await removeUploadedFile(req.file);
-      return res.status(409).json({ message: 'รายการจองถูกยกเลิกแล้ว จึงแนบสลิปชำระเงินไม่ได้' });
+      return res.status(409).json({ message: 'รายการจองถูกยกเลิกแล้ว จึงแจ้งชำระเงินไม่ได้' });
+    }
+    if (rows[0].paymentStatus === 'pending_review') {
+      await removeUploadedFile(req.file);
+      return res.status(409).json({ message: 'รายการนี้กำลังรอแอดมินยืนยันการชำระเงินอยู่แล้ว' });
     }
 
     const subtotal = Number(rows[0].subtotal);
     const discount = promoCode === 'PROMO10' ? Math.round(subtotal * 0.1 * 100) / 100 : 0;
     const vat = Math.round((subtotal - discount) * 0.07 * 100) / 100;
     const amountDue = Math.round((subtotal - discount + vat) * 100) / 100;
+
+    if (paymentMethod === 'cash') {
+      await removeUploadedFile(req.file);
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [updateResult] = await connection.query(
+          `UPDATE bookings SET discount_amount = ?, vat_amount = ?, amount_due = ?, promo_code = ?,
+                               payment_method = 'cash', payment_status = 'pending_review', slip_path = NULL,
+                               transaction_ref = NULL, slip2go_reference_id = NULL
+           WHERE id = ? AND user_id = ? AND payment_status IN ('unpaid', 'rejected') AND status <> 'cancelled'`,
+          [discount, vat, amountDue, promoCode || null, rows[0].id, req.user.id]
+        );
+        if (!updateResult.affectedRows) {
+          await connection.rollback();
+          return res.status(409).json({ message: 'รายการจองเปลี่ยนสถานะแล้ว กรุณาโหลดหน้าใหม่' });
+        }
+
+        const [admins] = await connection.query("SELECT id FROM users WHERE role = 'admin'");
+        for (const admin of admins) {
+          await connection.query(
+            `INSERT INTO notifications (user_id, booking_id, title, message, type)
+             VALUES (?, ?, 'มีรายการแจ้งชำระเงินสด', ?, 'booking_status')`,
+            [admin.id, rows[0].id, `ลูกค้าแจ้งชำระเงินสด ${amountDue.toFixed(2)} บาท กรุณาตรวจรับเงินและยืนยันรายการ`]
+          );
+        }
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback().catch(() => undefined);
+        throw error;
+      } finally {
+        connection.release();
+      }
+      return res.json({
+        paymentMethod: 'cash', paymentStatus: 'pending_review', subtotal, discount, vat, amountDue,
+        message: 'แจ้งชำระเงินสดแล้ว กรุณารอเจ้าหน้าที่ตรวจรับเงินและยืนยันรายการ'
+      });
+    }
+
+    if (!req.file) return res.status(400).json({ message: 'กรุณาแนบสลิปการโอนเงิน' });
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(req.file.mimetype)) {
+      await removeUploadedFile(req.file);
+      return res.status(422).json({ message: 'กรุณาแนบรูปสลิปที่มี QR Code (JPG, PNG หรือ WEBP)' });
+    }
+
     let verification;
     let verificationError;
     try {
@@ -594,6 +640,7 @@ router.post('/:code/payment', authenticate, upload.single('slip'), async (req, r
     const slipPath = `/uploads/${req.file.filename}`;
     const [updateResult] = await pool.query(
       `UPDATE bookings SET discount_amount = ?, vat_amount = ?, amount_due = ?, promo_code = ?,
+                           payment_method = 'promptpay',
                            payment_status = 'verified', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP),
                            slip_path = ?, transaction_ref = ?, slip2go_reference_id = ?
        WHERE id = ? AND user_id = ? AND status <> 'cancelled'`,
@@ -631,7 +678,8 @@ router.get('/:code', authenticate, async (req, res, next) => {
               b.customer_phone AS customerPhone, b.car_model AS carModel, b.car_plate AS carPlate,
               b.total_price AS subtotal, b.discount_amount AS discountAmount,
               b.vat_amount AS vatAmount, COALESCE(NULLIF(b.amount_due, 0), b.total_price) AS amountDue,
-              b.promo_code AS promoCode, b.status, b.payment_status AS paymentStatus, b.slip_path AS slipPath,
+              b.promo_code AS promoCode, b.status, b.payment_status AS paymentStatus,
+              b.payment_method AS paymentMethod, b.slip_path AS slipPath,
               s.name AS service
        FROM bookings b JOIN services s ON s.id = b.service_id
        WHERE b.booking_code = ? AND b.user_id = ?`,

@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   points_awarded INT UNSIGNED NOT NULL DEFAULT 0,
   status ENUM('pending', 'confirmed', 'in_service', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
   payment_status ENUM('unpaid', 'pending_review', 'verified', 'rejected') NOT NULL DEFAULT 'unpaid',
+  payment_method ENUM('promptpay', 'cash') NOT NULL DEFAULT 'promptpay',
   paid_at TIMESTAMP NULL DEFAULT NULL,
   slip_path VARCHAR(500) NULL,
   transaction_ref VARCHAR(120) NULL,

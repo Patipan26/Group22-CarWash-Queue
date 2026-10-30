@@ -180,6 +180,7 @@ router.get('/bookings', async (_req, res, next) => {
               b.car_plate AS carPlate, COALESCE(NULLIF(b.amount_due, 0), b.total_price) AS totalPrice,
               b.total_price AS subtotal, b.discount_amount AS discountAmount, b.vat_amount AS vatAmount,
               b.status, b.payment_status AS paymentStatus,
+              b.payment_method AS paymentMethod,
               b.slip_path AS slipPath, b.transaction_ref AS transactionRef,
               b.slip2go_reference_id AS slip2goReferenceId,
               (SELECT COUNT(*) FROM slip_verifications sv WHERE sv.booking_id = b.id) AS slipVerificationCount,
@@ -296,6 +297,7 @@ router.patch('/bookings/:id/payment', async (req, res, next) => {
     const [rows] = await connection.query(
       `SELECT id, user_id AS userId, status AS bookingStatus, total_price AS subtotal,
               payment_status AS paymentStatus,
+              payment_method AS paymentMethod, discount_amount AS discountAmount,
               slip_path AS slipPath
        FROM bookings WHERE id = ? FOR UPDATE`,
       [bookingId]
@@ -306,10 +308,16 @@ router.patch('/bookings/:id/payment', async (req, res, next) => {
       return res.status(404).json({ message: 'ไม่พบรายการจอง' });
     }
     const booking = rows[0];
-    if (booking.paymentStatus !== 'pending_review' || !booking.slipPath) {
+    const isCashPayment = booking.paymentMethod === 'cash';
+    if (booking.paymentStatus !== 'pending_review' || (isCashPayment ? Boolean(booking.slipPath) : !booking.slipPath)) {
       await connection.rollback();
       transactionStarted = false;
-      return res.status(409).json({ message: 'รายการนี้ไม่มีสลิปรอตรวจสอบแล้ว' });
+      return res.status(409).json({ message: 'รายการนี้ไม่มีการชำระเงินที่รอยืนยันแล้ว' });
+    }
+    if (paymentStatus === 'rejected' && isCashPayment) {
+      await connection.rollback();
+      transactionStarted = false;
+      return res.status(400).json({ message: 'รายการเงินสดใช้การปฏิเสธสลิปไม่ได้' });
     }
     if (paymentStatus === 'verified' && booking.bookingStatus === 'cancelled') {
       await connection.rollback();
@@ -318,21 +326,33 @@ router.patch('/bookings/:id/payment', async (req, res, next) => {
     }
 
     if (paymentStatus === 'verified') {
-      const vat = Math.round(Number(booking.subtotal) * 0.07 * 100) / 100;
-      const amountDue = Math.round((Number(booking.subtotal) + vat) * 100) / 100;
-      await connection.query(
-        `UPDATE bookings SET payment_status = 'verified', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP), discount_amount = 0,
-                             vat_amount = ?, amount_due = ?, promo_code = NULL
-         WHERE id = ?`,
-        [vat, amountDue, booking.id]
-      );
+      const discount = isCashPayment ? Number(booking.discountAmount || 0) : 0;
+      const vat = Math.round((Number(booking.subtotal) - discount) * 0.07 * 100) / 100;
+      const amountDue = Math.round((Number(booking.subtotal) - discount + vat) * 100) / 100;
+      if (isCashPayment) {
+        await connection.query(
+          `UPDATE bookings SET payment_status = 'verified', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP),
+                               vat_amount = ?, amount_due = ?
+           WHERE id = ?`,
+          [vat, amountDue, booking.id]
+        );
+      } else {
+        await connection.query(
+          `UPDATE bookings SET payment_status = 'verified', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP), discount_amount = 0,
+                               vat_amount = ?, amount_due = ?, promo_code = NULL
+           WHERE id = ?`,
+          [vat, amountDue, booking.id]
+        );
+      }
     } else {
       await connection.query('UPDATE bookings SET payment_status = ? WHERE id = ?', [paymentStatus, booking.id]);
     }
 
-    const title = paymentStatus === 'verified' ? 'ยืนยันการชำระเงินแล้ว' : 'สลิปไม่ผ่านการตรวจสอบ';
+    const title = paymentStatus === 'verified'
+      ? (isCashPayment ? 'ยืนยันรับเงินสดแล้ว' : 'ยืนยันการชำระเงินแล้ว')
+      : 'สลิปไม่ผ่านการตรวจสอบ';
     const message = paymentStatus === 'verified'
-      ? 'เจ้าหน้าที่ตรวจสอบและยืนยันการชำระเงินของคุณแล้ว'
+      ? (isCashPayment ? 'เจ้าหน้าที่ยืนยันว่าได้รับชำระเงินสดของคุณแล้ว' : 'เจ้าหน้าที่ตรวจสอบและยืนยันการชำระเงินของคุณแล้ว')
       : 'สลิปการชำระเงินไม่ผ่าน กรุณาเปิดรายการจองและส่งสลิปใหม่';
     await connection.query(
       `INSERT INTO notifications (user_id, booking_id, title, message, type)

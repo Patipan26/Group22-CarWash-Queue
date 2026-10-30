@@ -77,7 +77,15 @@ jobs:
           target="$VPS_USER@$VPS_HOST"
           ssh "$target" 'mkdir -p ~/apps/carwash-queue/database'
           scp docker-compose.production.yml "$target:~/apps/carwash-queue/"
-          scp database/schema.sql database/seed.sql "$target:~/apps/carwash-queue/database/"
+          scp database/schema.sql database/seed.sql database/migrations/010_cash_payment_method.sql "$target:~/apps/carwash-queue/database/"
+
+      - name: Apply cash payment database migration
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          target="$VPS_USER@$VPS_HOST"
+          ssh "$target" 'docker exec -i carwash-queue-live-db-1 sh -lc '\''mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'\'' < ~/apps/carwash-queue/database/010_cash_payment_method.sql'
 
       - name: Pull and start the isolated app stack
         env:
