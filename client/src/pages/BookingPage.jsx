@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { formatThaiDate, getBangkokToday } from '../utils/date';
+import { formatThaiDate, getBangkokToday, isSunday } from '../utils/date';
+import { Icon } from '../components/Icons';
 
 const timeSlots = [
   '09:00 - 10:00',
@@ -20,7 +21,6 @@ export default function BookingPage() {
   const [catalog, setCatalog] = useState({ services: [], addons: [] });
   const [serviceId, setServiceId] = useState('');
   const [addonIds, setAddonIds] = useState([]);
-  const [slip, setSlip] = useState(null);
   const [availability, setAvailability] = useState([]);
   const [slotCapacity, setSlotCapacity] = useState(1);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
@@ -33,8 +33,8 @@ export default function BookingPage() {
     carPlate: ''
   });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
+  const selectedDateClosed = isSunday(form.bookingDate);
 
   useEffect(() => {
     api('/services')
@@ -48,8 +48,12 @@ export default function BookingPage() {
   }, [location.search]);
 
   useEffect(() => {
-    if (!form.bookingDate) {
+    if (!form.bookingDate || isSunday(form.bookingDate)) {
       setAvailability([]);
+      setAvailabilityLoading(false);
+      if (form.bookingDate && isSunday(form.bookingDate)) {
+        setForm((current) => current.bookingTime ? { ...current, bookingTime: '' } : current);
+      }
       return undefined;
     }
 
@@ -83,6 +87,7 @@ export default function BookingPage() {
   );
 
   const update = (key, value) => {
+    if (key === 'bookingDate') setError('');
     setForm((current) => ({
       ...current,
       [key]: value,
@@ -102,7 +107,10 @@ export default function BookingPage() {
   async function submit(event) {
     event.preventDefault();
     setError('');
-    setSuccess('');
+    if (selectedDateClosed) {
+      setError('ร้านปิดทุกวันอาทิตย์ กรุณาเลือกวันอื่น');
+      return;
+    }
     if (!user) return navigate(`/auth?return=${encodeURIComponent('/booking')}`);
     setBusy(true);
 
@@ -111,13 +119,11 @@ export default function BookingPage() {
       Object.entries(form).forEach(([key, value]) => body.append(key, value));
       body.append('serviceId', serviceId);
       body.append('addonIds', JSON.stringify(addonIds));
-      if (slip) body.append('slip', slip);
-
       const result = await api('/bookings', { method: 'POST', body });
-      setSuccess(`จองคิวสำเร็จ รหัสการจอง ${result.bookingCode} ยอดรวม ฿${Number(result.totalPrice).toLocaleString()}`);
       setAvailability((current) => current.map((slot) => slot.time === form.bookingTime
         ? { ...slot, bookedCount: slot.bookedCount + 1, remaining: Math.max(slot.remaining - 1, 0), available: slot.remaining - 1 > 0 }
         : slot));
+      navigate(`/payment/${encodeURIComponent(result.bookingCode)}`);
     } catch (err) {
       setError(err.message);
       if (err.message.includes('เต็มแล้ว')) {
@@ -131,87 +137,102 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
-      <div className="mb-7">
-        <p className="eyebrow">Make a booking</p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#0b1f3a] md:text-5xl">จองคิวออนไลน์</h1>
-        <p className="text-sm text-slate-500 mt-2">ระบุรายละเอียดและแนบสลิปเพื่อส่งคำขอจอง</p>
+    <div className="mx-auto max-w-7xl px-5 py-8 md:py-12">
+      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Make a booking</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#10284a] md:text-[42px]">จองคิวออนไลน์</h1>
+          <p className="mt-2 text-sm text-slate-500">เลือกบริการและเวลาที่สะดวก แล้วชำระเงินในขั้นตอนถัดไป</p>
+        </div>
+        <div className="flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-500 shadow-sm sm:self-auto">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white">1</span>
+          <span className="text-blue-700">เลือกรายละเอียด</span><span className="mx-1 h-px w-6 bg-slate-200" />
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">2</span><span>ชำระเงิน</span>
+        </div>
       </div>
 
       {error && <div className="mb-5 bg-rose-50 text-rose-700 rounded-xl p-3 text-sm">{error}</div>}
-      {success && <div className="mb-5 bg-emerald-50 text-emerald-700 rounded-xl p-4 text-sm">{success} <Link to="/status" className="font-bold underline ml-2">ดูสถานะ</Link></div>}
 
-      <form onSubmit={submit} className="grid lg:grid-cols-3 gap-7">
-        <div className="lg:col-span-2 space-y-6">
-          <section className="surface rounded-xl p-6 md:p-7">
-            <h2 className="border-l-2 border-blue-600 pl-3 font-bold text-[#0b1f3a]">เลือกวันและเวลา</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <label className="text-sm font-semibold">
-                วันที่
-                <input type="date" required min={getBangkokToday()} value={form.bookingDate} onChange={(e) => update('bookingDate', e.target.value)} className="mt-1 w-full border rounded-xl p-3 font-normal" />
-                {form.bookingDate && <span className="block mt-2 text-xs font-medium text-blue-600">วันที่เลือก: {formatThaiDate(form.bookingDate, { withWeekday: true })}</span>}
-              </label>
-              <label className="text-sm font-semibold">
-                ช่วงเวลา
-                <select required value={form.bookingTime} onChange={(e) => update('bookingTime', e.target.value)} className="mt-1 w-full border rounded-xl p-3 font-normal bg-white">
-                  <option value="">-- เลือกเวลา --</option>
-                  {timeSlots.map((time) => {
-                    const slot = getSlot(time);
-                    return <option key={time} value={time} disabled={!slot.available}>
-                      {time}{form.bookingDate && (slot.available ? ` (เหลือ ${slot.remaining}/${slotCapacity})` : ' (เต็มแล้ว)')}
-                    </option>;
-                  })}
-                </select>
-              </label>
+      <form onSubmit={submit} className="grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="space-y-5 lg:col-span-2">
+          <section className="surface rounded-2xl p-5 md:p-7">
+            <div className="mb-5 flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Icon name="calendar" /></span>
+              <div><h2 className="font-bold text-[#10284a]">เลือกวันและเวลา</h2><p className="mt-1 text-xs text-slate-500">เลือกวันก่อน แล้วเลือกช่วงเวลาที่คิวว่าง</p></div>
             </div>
-            {form.bookingDate && <p className="text-xs text-slate-500 mt-3">จำกัด {slotCapacity} คันต่อช่วงเวลา {availabilityLoading && '· กำลังตรวจสอบคิว...'}</p>}
-          </section>
-
-          <section className="surface rounded-xl p-6 md:p-7">
-            <h2 className="border-l-2 border-blue-600 pl-3 font-bold text-[#0b1f3a]">บริการหลัก</h2>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {catalog.services.map((service) => <label key={service.id} className={`cursor-pointer border-2 rounded-xl p-4 ${String(service.id) === String(serviceId) ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}>
-                <input type="radio" name="service" value={service.id} checked={String(service.id) === String(serviceId)} onChange={(e) => setServiceId(e.target.value)} className="sr-only" />
-                <span className="block font-bold text-sm">{service.name}</span>
-                <span className="block text-xs text-slate-500 mt-2">{service.description}</span>
-                <span className="block text-blue-600 font-bold mt-3">฿{Number(service.price).toLocaleString()}</span>
-              </label>)}
-            </div>
-          </section>
-
-          <section className="surface rounded-xl p-6 md:p-7">
-            <h2 className="border-l-2 border-blue-600 pl-3 font-bold text-[#0b1f3a]">บริการเสริม</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {catalog.addons.map((addon) => <label key={addon.id} className="border rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-slate-50">
-                <span className="flex items-center gap-3"><input type="checkbox" checked={addonIds.includes(Number(addon.id))} onChange={(e) => setAddonIds(e.target.checked ? [...addonIds, Number(addon.id)] : addonIds.filter((id) => id !== Number(addon.id)))} /><span><b className="text-sm">{addon.name}</b><small className="block text-xs text-slate-500">{addon.description}</small></span></span>
-                <b className="text-blue-600 text-sm">฿{Number(addon.price).toLocaleString()}</b>
-              </label>)}
-            </div>
-          </section>
-
-          <section className="surface rounded-xl p-6 md:p-7">
-            <h2 className="font-bold mb-4">ข้อมูลลูกค้าและรถ</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[['customerName', 'ชื่อ - นามสกุล'], ['customerPhone', 'เบอร์โทรศัพท์'], ['carModel', 'รุ่นรถ'], ['carPlate', 'ทะเบียนรถ']].map(([key, label]) => <label key={key} className="text-sm font-semibold">
-                {label}<input required value={form[key]} onChange={(e) => update(key, e.target.value)} className="mt-1 w-full border rounded-xl p-3 font-normal" />
-              </label>)}
-            </div>
-            <label className="block text-sm font-semibold mt-4">สลิปการชำระเงิน <span className="text-xs text-slate-400 font-normal">(ถ้ามี)</span>
-              <input type="file" accept="image/*,.pdf" onChange={(e) => setSlip(e.target.files?.[0] || null)} className="mt-1 w-full border rounded-xl p-3 text-xs font-normal bg-slate-50" />
+            <label className="block max-w-sm text-sm font-semibold text-slate-700">
+              วันที่เข้ารับบริการ
+              <input type="date" required min={getBangkokToday()} value={form.bookingDate} onChange={(e) => update('bookingDate', e.target.value)} className={`field ${selectedDateClosed ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : ''}`} />
+              {form.bookingDate && <span className="mt-2 block text-xs font-medium text-blue-700">{formatThaiDate(form.bookingDate, { withWeekday: true })}</span>}
+              {selectedDateClosed && <span className="mt-2 block text-xs font-semibold text-rose-600">ร้านปิดทุกวันอาทิตย์ กรุณาเลือกวันจันทร์–เสาร์</span>}
             </label>
-            <p className="text-xs text-slate-500 mt-2">ระบบจะตั้งสถานะรอตรวจสอบเมื่อแนบสลิป แอดมินจะตรวจสอบก่อนยืนยันการจอง</p>
+            <div className="mt-5">
+              <div className="mb-3 flex items-center justify-between"><p className="text-sm font-semibold text-slate-700">ช่วงเวลา</p>{availabilityLoading && <span className="text-xs text-blue-600">กำลังตรวจสอบคิว...</span>}</div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {timeSlots.map((time) => {
+                  const slot = getSlot(time);
+                  const selected = form.bookingTime === time;
+                  const canSelect = Boolean(form.bookingDate) && !selectedDateClosed && slot.available;
+                  return <label key={time} className={`relative flex flex-col rounded-xl border p-3 transition ${selected ? 'cursor-pointer border-blue-500 bg-blue-50 ring-2 ring-blue-100' : canSelect ? 'cursor-pointer border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50' : 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-60'} focus-within:ring-2 focus-within:ring-blue-200`}>
+                    <input type="radio" name="bookingTime" required value={time} checked={selected} disabled={!canSelect} onChange={() => update('bookingTime', time)} className="sr-only" />
+                    <span className="flex items-center gap-2 text-sm font-bold text-slate-800"><Icon name="clock" size={16} className={selected ? 'text-blue-600' : 'text-slate-400'} />{time}</span>
+                    <span className={`mt-1 pl-6 text-[11px] ${slot.available ? 'text-slate-500' : 'text-rose-500'}`}>{selectedDateClosed ? 'ร้านปิด' : !form.bookingDate ? 'เลือกวันที่ก่อน' : slot.available ? `ว่าง ${slot.remaining}/${slotCapacity} คิว` : 'คิวเต็ม'}</span>
+                  </label>;
+                })}
+              </div>
+              {form.bookingDate && <p className="mt-3 text-xs text-slate-400">จำกัด {slotCapacity} คันต่อช่วงเวลา</p>}
+            </div>
+          </section>
+
+          <section className="surface rounded-2xl p-5 md:p-7">
+            <div className="mb-5 flex items-start gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><Icon name="sparkle" /></span><div><h2 className="font-bold text-[#10284a]">บริการหลัก</h2><p className="mt-1 text-xs text-slate-500">เลือกแพ็กเกจที่เหมาะกับรถของคุณ</p></div></div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {catalog.services.map((service) => <label key={service.id} className={`relative cursor-pointer rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-200 ${String(service.id) === String(serviceId) ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-100' : 'border-slate-200 bg-white hover:border-blue-200'}`}>
+                <input type="radio" name="service" value={service.id} checked={String(service.id) === String(serviceId)} onChange={(e) => setServiceId(e.target.value)} className="sr-only" />
+                {String(service.id) === String(serviceId) && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white"><Icon name="check" size={13} /></span>}
+                <span className="block pr-5 text-sm font-bold text-slate-800">{service.name}</span>
+                <span className="mt-2 block min-h-10 text-xs leading-5 text-slate-500">{service.description}</span>
+                <span className="mt-3 block text-lg font-bold text-blue-600">฿{Number(service.price).toLocaleString()}</span>
+              </label>)}
+            </div>
+          </section>
+
+          <section className="surface rounded-2xl p-5 md:p-7">
+            <div className="mb-5 flex items-start gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Icon name="sparkle" /></span><div><h2 className="font-bold text-[#10284a]">บริการเสริม <span className="font-normal text-slate-400">(เลือกได้)</span></h2><p className="mt-1 text-xs text-slate-500">เพิ่มความสะอาดและการดูแลให้ครบยิ่งขึ้น</p></div></div>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {catalog.addons.map((addon) => {
+                const checked = addonIds.includes(Number(addon.id));
+                return <label key={addon.id} className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border p-3.5 transition ${checked ? 'border-blue-300 bg-blue-50/70' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}`}>
+                <span className="flex min-w-0 items-center gap-3"><input type="checkbox" checked={checked} onChange={(e) => setAddonIds(e.target.checked ? [...addonIds, Number(addon.id)] : addonIds.filter((id) => id !== Number(addon.id)))} className="h-4 w-4 accent-blue-600" /><span className="min-w-0"><b className="block text-sm text-slate-800">{addon.name}</b><small className="mt-0.5 block text-xs leading-4 text-slate-500">{addon.description}</small></span></span>
+                <b className="shrink-0 text-sm text-blue-600">฿{Number(addon.price).toLocaleString()}</b>
+                </label>;
+              })}
+            </div>
+          </section>
+
+          <section className="surface rounded-2xl p-5 md:p-7">
+            <div className="mb-5 flex items-start gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Icon name="car" /></span><div><h2 className="font-bold text-[#10284a]">ข้อมูลลูกค้าและรถ</h2><p className="mt-1 text-xs text-slate-500">ใช้สำหรับติดต่อและเตรียมรับรถ</p></div></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[['customerName', 'ชื่อ - นามสกุล'], ['customerPhone', 'เบอร์โทรศัพท์'], ['carModel', 'รุ่นรถ'], ['carPlate', 'ทะเบียนรถ']].map(([key, label]) => <label key={key} className="text-sm font-semibold">
+                {label}<input required value={form[key]} onChange={(e) => update(key, e.target.value)} placeholder={key === 'customerPhone' ? '08X-XXX-XXXX' : key === 'carPlate' ? 'เช่น กข 1234' : `กรอก${label}`} className="field" />
+              </label>)}
+            </div>
+            <div className="mt-5 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500"><Icon name="shield" size={17} className="mt-0.5 shrink-0 text-emerald-600" /><span>ข้อมูลของคุณใช้สำหรับการจองครั้งนี้เท่านั้น หลังยืนยัน ระบบจะแสดง QR สำหรับชำระเงินและช่องทางส่งสลิป</span></div>
           </section>
         </div>
 
-        <aside className="surface h-fit rounded-xl border-t-4 border-t-blue-600 p-6 shadow-sm sticky top-24">
-          <h2 className="font-bold text-[#0b1f3a] border-b pb-4">สรุปการจอง</h2>
-          <div className="space-y-3 text-sm py-4">
-            <div className="flex justify-between gap-4"><span className="text-slate-500">บริการหลัก</span><b>{selectedService?.name || '-'}</b></div>
-            {selectedAddons.map((addon) => <div key={addon.id} className="flex justify-between gap-4 text-xs"><span className="text-slate-500">+ {addon.name}</span><b>฿{Number(addon.price).toLocaleString()}</b></div>)}
-            <div className="flex justify-between gap-4"><span className="text-slate-500">วันเวลา</span><b>{formatThaiDate(form.bookingDate, { withWeekday: true })} {form.bookingTime && `| ${form.bookingTime}`}</b></div>
+        <aside className="surface h-fit overflow-hidden rounded-2xl lg:sticky lg:top-24">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white"><p className="text-xs font-semibold tracking-wide text-blue-100">YOUR BOOKING</p><h2 className="mt-1 text-lg font-bold">สรุปรายการจอง</h2></div>
+          <div className="p-5 md:p-6">
+          <div className="space-y-4 text-sm">
+            <div className="flex items-start justify-between gap-4"><span className="text-slate-500">บริการหลัก</span><b className="text-right text-slate-800">{selectedService?.name || 'เลือกบริการ'}</b></div>
+            {selectedAddons.map((addon) => <div key={addon.id} className="flex justify-between gap-4 text-xs"><span className="text-slate-500">+ {addon.name}</span><b className="text-slate-700">฿{Number(addon.price).toLocaleString()}</b></div>)}
+            <div className="flex items-start justify-between gap-4 border-t border-dashed pt-4"><span className="text-slate-500">วันและเวลา</span><b className="max-w-[65%] text-right text-slate-800">{form.bookingDate ? formatThaiDate(form.bookingDate, { withWeekday: true }) : 'เลือกวันที่'}<span className="block text-xs font-medium text-slate-500">{form.bookingTime || 'เลือกช่วงเวลา'}</span></b></div>
           </div>
-          <div className="border-t pt-4 flex justify-between items-center"><span className="font-semibold">ยอดรวม</span><span className="text-2xl text-blue-600 font-bold">฿{total.toLocaleString()}</span></div>
-          <button disabled={busy || !catalog.services.length || availabilityLoading} className="w-full mt-5 bg-blue-600 disabled:opacity-60 hover:bg-blue-700 text-white py-3 rounded-xl font-bold">{busy ? 'กำลังบันทึก...' : user ? 'ยืนยันการจอง' : 'เข้าสู่ระบบเพื่อจอง'}</button>
+          <div className="mt-5 flex items-end justify-between border-t pt-4"><span className="pb-1 font-semibold text-slate-700">ยอดรวม</span><span className="text-3xl font-bold tracking-tight text-blue-600">฿{total.toLocaleString()}</span></div>
+          <button disabled={busy || !catalog.services.length || availabilityLoading || selectedDateClosed} className="primary-button mt-5 w-full rounded-xl py-3.5 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'กำลังบันทึก...' : user ? 'ยืนยันการจอง' : 'เข้าสู่ระบบเพื่อจอง'}<Icon name="arrow" size={18} /></button>
+          <p className="mt-3 text-center text-[11px] text-slate-400">ตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน</p>
+          </div>
         </aside>
       </form>
     </div>

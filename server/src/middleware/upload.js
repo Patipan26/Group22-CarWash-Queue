@@ -8,7 +8,12 @@ fs.mkdirSync(uploadDir, { recursive: true });
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
-    const safeExtension = path.extname(file.originalname).toLowerCase();
+    const safeExtension = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'application/pdf': '.pdf'
+    }[file.mimetype] || '.bin';
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExtension}`);
   }
 });

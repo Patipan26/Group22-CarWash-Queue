@@ -1,9 +1,14 @@
 const jwt = require('jsonwebtoken');
 
 function getToken(req) {
-  if (req.cookies?.token) return req.cookies.token;
+  const sessionId = req.headers['x-session-id'];
+  if (sessionId) {
+    if (!/^[a-zA-Z0-9-]{1,80}$/.test(sessionId)) return null;
+    return req.cookies?.[`token_${sessionId}`] || null;
+  }
   const header = req.headers.authorization || '';
-  return header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (header.startsWith('Bearer ')) return header.slice(7);
+  return req.cookies?.token || null;
 }
 
 function authenticate(req, res, next) {
@@ -31,4 +36,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { authenticate, optionalAuthenticate, requireAdmin };
+module.exports = { authenticate, optionalAuthenticate, requireAdmin, getToken };

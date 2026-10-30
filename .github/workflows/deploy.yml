@@ -1,0 +1,99 @@
+name: CarWash Queue CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Sign in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ghcr.io/patipan26/carwash-queue-api:latest
+            ghcr.io/patipan26/carwash-queue-api:${{ github.sha }}
+
+      - name: Build and push client
+        uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          push: true
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+          tags: |
+            ghcr.io/patipan26/carwash-queue-client:latest
+            ghcr.io/patipan26/carwash-queue-client:${{ github.sha }}
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && vars.APP_URL != ''
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployment files
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          test -n "$VPS_SSH_KEY" || { echo "Missing secret VPS_SSH_KEY"; exit 1; }
+          test -n "$VPS_KNOWN_HOSTS" || { echo "Missing secret VPS_KNOWN_HOSTS"; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Copy production Compose and database bootstrap files
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          test -n "$VPS_HOST" || { echo "Missing secret VPS_HOST"; exit 1; }
+          test -n "$VPS_USER" || { echo "Missing secret VPS_USER"; exit 1; }
+          target="$VPS_USER@$VPS_HOST"
+          ssh "$target" 'mkdir -p ~/apps/carwash-queue/database'
+          scp docker-compose.production.yml "$target:~/apps/carwash-queue/"
+          scp database/schema.sql database/seed.sql "$target:~/apps/carwash-queue/database/"
+
+      - name: Pull and start the isolated app stack
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+        run: |
+          test -n "$GHCR_PULL_TOKEN" || { echo "Missing secret GHCR_PULL_TOKEN (read:packages)"; exit 1; }
+          test -n "$PRODUCTION_ENV" || { echo "Missing secret PRODUCTION_ENV"; exit 1; }
+          target="$VPS_USER@$VPS_HOST"
+          printf '%s\n' "$PRODUCTION_ENV" | ssh "$target" 'umask 077; cat > ~/apps/carwash-queue/.env.production'
+          printf '%s' "$GHCR_PULL_TOKEN" | ssh "$target" \
+            'docker login ghcr.io -u patipan26 --password-stdin && cd ~/apps/carwash-queue && docker compose -p carwash-queue-live --env-file .env.production -f docker-compose.production.yml pull && docker compose -p carwash-queue-live --env-file .env.production -f docker-compose.production.yml up -d --remove-orphans; result=$?; docker logout ghcr.io >/dev/null 2>&1 || true; exit $result'
+
+      - name: Check public app health
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: curl --fail --silent --show-error --retry 12 --retry-delay 5 "$APP_URL/api/health"

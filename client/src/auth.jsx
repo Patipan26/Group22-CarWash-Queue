@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
 
   async function logout() {
     await api('/auth/logout', { method: 'POST' });
+    window.sessionStorage.removeItem('carwash-tab-session-id');
     setUser(null);
   }
 

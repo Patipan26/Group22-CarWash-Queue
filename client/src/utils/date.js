@@ -37,6 +37,13 @@ export function toDateInputValue(value) {
   return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
 }
 
+export function isSunday(value) {
+  const iso = toDateInputValue(value);
+  if (!iso) return false;
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 0;
+}
+
 function parseDateOnly(value) {
   const iso = toDateInputValue(value);
   if (!iso) return null;

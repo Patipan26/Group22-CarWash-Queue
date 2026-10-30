@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const pool = require('../db');
+const { getToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,9 +15,14 @@ function issueToken(user) {
   );
 }
 
-function setAuthCookie(res, user) {
+function getSessionCookieName(req) {
+  const sessionId = req.headers['x-session-id'];
+  return sessionId && /^[a-zA-Z0-9-]{1,80}$/.test(sessionId) ? `token_${sessionId}` : 'token';
+}
+
+function setAuthCookie(res, user, req) {
   const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie('token', issueToken(user), {
+  res.cookie(getSessionCookieName(req), issueToken(user), {
     httpOnly: true,
     sameSite: isProduction ? 'none' : 'lax',
     secure: isProduction,
@@ -41,7 +47,7 @@ router.post('/register', async (req, res, next) => {
       [email, passwordHash, req.body.name || null, req.body.phone || null]
     );
     const user = { id: result.insertId, email, role: 'customer' };
-    setAuthCookie(res, user);
+    setAuthCookie(res, user, req);
     res.status(201).json({ user });
   } catch (error) { next(error); }
 });
@@ -92,7 +98,7 @@ router.post('/google', async (req, res, next) => {
     }
 
     const sessionUser = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
-    setAuthCookie(res, sessionUser);
+    setAuthCookie(res, sessionUser, req);
     res.json({ user: sessionUser });
   } catch (error) { next(error); }
 });
@@ -106,18 +112,19 @@ router.post('/login', async (req, res, next) => {
     if (!user || !user.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
     }
-    setAuthCookie(res, user);
-    res.json({ user: { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role } });
+    const sessionUser = { id: user.id, email: user.email, name: user.name, phone: user.phone, role: user.role };
+    setAuthCookie(res, sessionUser, req);
+    res.json({ user: sessionUser });
   } catch (error) { next(error); }
 });
 
-router.post('/logout', (_req, res) => {
-  res.clearCookie('token');
+router.post('/logout', (req, res) => {
+  res.clearCookie(getSessionCookieName(req));
   res.json({ message: 'ออกจากระบบแล้ว' });
 });
 
 router.get('/me', (req, res) => {
-  const token = req.cookies?.token;
+  const token = getToken(req);
   if (!token) return res.json({ user: null });
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET || 'development-secret');
