@@ -86,6 +86,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [updatingBookingId, setUpdatingBookingId] = useState(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState(null);
 
   async function load() {
     try {
@@ -119,7 +120,6 @@ export default function AdminPage() {
   }, [tab, revenueRange.from, revenueRange.to]);
 
   async function updateStatus(id, status) {
-    if (status === 'cancelled' && !window.confirm('ยืนยันยกเลิกการจองนี้หรือไม่')) return;
     setUpdatingBookingId(id);
     try {
       await api(`/admin/bookings/${id}/status`, {
@@ -135,7 +135,6 @@ export default function AdminPage() {
   }
 
   async function updatePaymentStatus(booking, paymentStatus) {
-    if (paymentStatus === 'rejected' && !window.confirm(`ยืนยันปฏิเสธสลิปของรายการ ${booking.bookingCode} หรือไม่`)) return;
     setUpdatingPaymentId(booking.id);
     try {
       await api(`/admin/bookings/${booking.id}/payment`, {
@@ -148,6 +147,14 @@ export default function AdminPage() {
     } finally {
       setUpdatingPaymentId(null);
     }
+  }
+
+  async function confirmAdminAction() {
+    if (!pendingConfirmation) return;
+    const confirmation = pendingConfirmation;
+    setPendingConfirmation(null);
+    if (confirmation.type === 'cancel-booking') await updateStatus(confirmation.booking.id, 'cancelled');
+    if (confirmation.type === 'reject-slip') await updatePaymentStatus(confirmation.booking, 'rejected');
   }
 
   async function deleteContact() {
@@ -355,11 +362,11 @@ export default function AdminPage() {
                         <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusColors[item.status] || 'bg-slate-100 text-slate-700'}`}>{statusLabels[item.status] || item.status}</span>
                         {nextStatus[item.status] && item.paymentStatus === 'verified' && <button type="button" disabled={updatingBookingId === item.id} onClick={() => updateStatus(item.id, nextStatus[item.status])} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"><Icon name="arrow" size={14} />{updatingBookingId === item.id ? 'กำลังบันทึก...' : nextStatusActions[item.status]}</button>}
                         {nextStatus[item.status] && item.paymentStatus !== 'verified' && <span className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-medium text-amber-800">ยืนยันการชำระเงินก่อนดำเนินงาน</span>}
-                        {!['completed', 'cancelled'].includes(item.status) && <button type="button" disabled={updatingBookingId === item.id} onClick={() => updateStatus(item.id, 'cancelled')} className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60">ยกเลิกการจอง</button>}
+                        {!['completed', 'cancelled'].includes(item.status) && <button type="button" disabled={updatingBookingId === item.id} onClick={() => setPendingConfirmation({ type: 'cancel-booking', booking: item })} className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60">ยกเลิกการจอง</button>}
                       </div>
                       <div className="text-[11px] text-slate-400 mt-2">ชำระเงิน: {paymentLabels[item.paymentStatus] || item.paymentStatus}</div>
                       {(item.slipPath || Number(item.slipVerificationCount) > 0) && <div className="mt-2 flex flex-wrap gap-2">{item.slipPath && <button type="button" onClick={() => openPrivateFile(`/admin/bookings/${item.id}/slip`)} className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"><Icon name="eye" size={14} />ดูสลิป</button>}{Number(item.slipVerificationCount) > 0 && <button type="button" onClick={() => openSlipHistory(item)} className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"><Icon name="clock" size={14} />ประวัติผลตรวจ<span className="ml-0.5 rounded-full bg-indigo-200 px-1.5 py-0.5 text-[10px] leading-none text-indigo-800">{item.slipVerificationCount}</span></button>}</div>}
-                      {item.paymentStatus === 'pending_review' && item.status !== 'cancelled' && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={updatingPaymentId === item.id} onClick={() => updatePaymentStatus(item, 'verified')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{updatingPaymentId === item.id ? 'กำลังบันทึก...' : 'อนุมัติชำระเงิน'}</button><button type="button" disabled={updatingPaymentId === item.id} onClick={() => updatePaymentStatus(item, 'rejected')} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">ปฏิเสธสลิป</button></div>}
+                      {item.paymentStatus === 'pending_review' && item.status !== 'cancelled' && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={updatingPaymentId === item.id} onClick={() => updatePaymentStatus(item, 'verified')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">{updatingPaymentId === item.id ? 'กำลังบันทึก...' : 'อนุมัติชำระเงิน'}</button><button type="button" disabled={updatingPaymentId === item.id} onClick={() => setPendingConfirmation({ type: 'reject-slip', booking: item })} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">ปฏิเสธสลิป</button></div>}
                     </td>
                   </tr>
                 ))}
@@ -495,6 +502,18 @@ export default function AdminPage() {
             <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={Boolean(catalogEditor.active)} onChange={(event) => setCatalogEditor({ ...catalogEditor, active: event.target.checked })} className="h-4 w-4 accent-blue-600" />เปิดให้ลูกค้าเลือกจอง</label>
             <div className="flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" disabled={savingCatalog} onClick={() => setCatalogEditor(null)} className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">ยกเลิก</button><button type="submit" disabled={savingCatalog} className="primary-button !px-5 !py-2.5 text-sm disabled:opacity-60">{savingCatalog ? 'กำลังบันทึก...' : 'บันทึก'}</button></div>
           </form>
+        </section>
+      </div>}
+      {pendingConfirmation && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingConfirmation(null); }} className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+        <section role="alertdialog" aria-modal="true" aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-description" className="w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25">
+          <div className="p-6 text-center md:p-8">
+            <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-rose-50 text-rose-600 ring-8 ring-rose-50/60"><Icon name="close" size={27} /></span>
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-rose-600">ต้องการการยืนยัน</p>
+            <h2 id="admin-confirm-title" className="mt-2 text-2xl font-bold text-[#0b1f3a]">{pendingConfirmation.type === 'cancel-booking' ? 'ยืนยันยกเลิกการจอง?' : 'ยืนยันปฏิเสธสลิป?'}</h2>
+            <p id="admin-confirm-description" className="mt-2 text-sm leading-6 text-slate-500">{pendingConfirmation.type === 'cancel-booking' ? 'ระบบจะเปลี่ยนสถานะการจองเป็นยกเลิก ลูกค้าจะไม่สามารถใช้คิวนี้ได้' : 'ระบบจะบันทึกว่าสลิปนี้ไม่ผ่านการตรวจสอบ'}</p>
+            <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left"><p className="text-xs text-slate-500">รหัสการจอง</p><p className="mt-1 break-all font-mono text-sm font-bold text-slate-800">{pendingConfirmation.booking.bookingCode}</p><p className="mt-3 text-xs text-slate-500">ลูกค้า</p><p className="mt-1 font-semibold text-slate-800">{pendingConfirmation.booking.customerName}</p>{pendingConfirmation.type === 'cancel-booking' && pendingConfirmation.booking.paymentStatus === 'verified' && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">รายการนี้ชำระเงินแล้ว กรุณาตรวจสอบเรื่องคืนเงินกับลูกค้าหลังยกเลิก</p>}</div>
+            <div className="mt-6 flex gap-3"><button type="button" autoFocus onClick={() => setPendingConfirmation(null)} className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">กลับไปดูรายการ</button><button type="button" onClick={confirmAdminAction} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-600 bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:border-rose-700 hover:bg-rose-700">{pendingConfirmation.type === 'cancel-booking' ? 'ยืนยันยกเลิก' : 'ยืนยันปฏิเสธสลิป'}</button></div>
+          </div>
         </section>
       </div>}
       {contactToDelete && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !deletingContact) setContactToDelete(null); }} className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">

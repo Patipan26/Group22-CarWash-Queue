@@ -47,7 +47,7 @@ jobs:
             ghcr.io/patipan26/carwash-queue-client:${{ github.sha }}
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' && vars.APP_URL != ''
+    if: vars.APP_URL != ''
     needs: build-push
     runs-on: ubuntu-latest
     steps:
