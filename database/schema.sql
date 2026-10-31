@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS contacts (
   subject VARCHAR(120) NOT NULL,
   message TEXT NOT NULL,
   attachment_path VARCHAR(500) NULL,
+  attachment_original_name VARCHAR(255) NULL,
   status ENUM('unread', 'read', 'archived') NOT NULL DEFAULT 'unread',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_contacts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,

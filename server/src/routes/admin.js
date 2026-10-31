@@ -435,7 +435,8 @@ router.get('/contacts', async (_req, res, next) => {
   try {
     const [contacts] = await pool.query(
       `SELECT id, sender_name AS senderName, sender_contact AS senderContact, subject, message,
-              attachment_path AS attachmentPath, status, created_at AS createdAt
+              attachment_path AS attachmentPath, attachment_original_name AS attachmentOriginalName,
+              status, created_at AS createdAt
        FROM contacts ORDER BY created_at DESC`
     );
     res.json({ contacts });
