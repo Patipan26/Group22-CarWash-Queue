@@ -111,7 +111,22 @@ export default function AdminPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { void load(); }, []);
+
+  useEffect(() => {
+    if (tab !== 'bookings') return undefined;
+    let active = true;
+    const refreshBookings = async () => {
+      try {
+        const data = await api('/admin/bookings', { cache: 'no-store' });
+        if (active) setBookings(data.bookings);
+      } catch {
+        // Keep the last loaded list visible during temporary network errors.
+      }
+    };
+    const timer = window.setInterval(() => { void refreshBookings(); }, 10000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [tab]);
 
   useEffect(() => {
     if (tab !== 'revenue' || !revenueRange.from || !revenueRange.to) return undefined;
@@ -345,7 +360,7 @@ export default function AdminPage() {
                 {Object.entries(paymentLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
               </select>
               <button onClick={() => setBookingFilter({ search: '', status: 'all', date: '', payment: 'all' })} className="text-sm text-slate-500 hover:text-blue-600">ล้างตัวกรอง</button>
-              <span className="text-xs text-slate-400">พบ {filteredBookings.length} รายการ</span>
+              <span className="text-xs text-slate-400">พบ {filteredBookings.length} รายการ · อัปเดตอัตโนมัติทุก 10 วินาที</span>
             </div>
           </div>
 
@@ -431,9 +446,9 @@ export default function AdminPage() {
               <thead className="bg-slate-50 border-b"><tr><th className="p-4">ผู้ส่ง</th><th className="p-4">หัวข้อและตัวอย่างข้อความ</th><th className="p-4">วันที่ส่ง</th><th className="p-4">สถานะ</th><th className="p-4">จัดการ</th></tr></thead>
               <tbody className="divide-y">
                 {filteredContacts.map((item) => (
-                  <tr key={item.id} tabIndex={0} aria-label={`เปิดข้อความ ${item.subject} จาก ${item.senderName}`} onClick={() => openContact(item)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openContact(item); } }} className={`cursor-pointer transition hover:bg-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${item.status === 'unread' ? 'bg-blue-50/40' : ''}`}>
+                  <tr key={item.id} tabIndex={0} aria-label={`เปิดข้อความ ${item.subject} จาก ${item.senderName}`} onClick={() => { void openContact(item); }} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); void openContact(item); } }} className={`cursor-pointer transition hover:bg-blue-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${item.status === 'unread' ? 'bg-blue-50/40' : ''}`}>
                     <td className="p-4"><b className={`block ${item.status === 'unread' ? 'text-slate-900' : 'font-medium text-slate-700'}`}>{item.senderName}</b><span className="mt-1 block text-xs text-slate-400">{item.senderContact}</span></td>
-                    <td className="max-w-md p-4"><button type="button" onClick={(event) => { event.stopPropagation(); openContact(item); }} className="block w-full text-left"><span className={`block truncate ${item.status === 'unread' ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>{item.subject}</span><span className="mt-1 block truncate text-xs text-slate-500">{item.message}</span></button>{item.attachmentPath && <span className="mt-1 inline-block text-[10px] text-blue-600">มีไฟล์แนบ</span>}</td>
+                    <td className="max-w-md p-4"><button type="button" onClick={(event) => { event.stopPropagation(); void openContact(item); }} className="block w-full text-left"><span className={`block truncate ${item.status === 'unread' ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>{item.subject}</span><span className="mt-1 block truncate text-xs text-slate-500">{item.message}</span></button>{item.attachmentPath && <span className="mt-1 inline-block text-[10px] text-blue-600">มีไฟล์แนบ</span>}</td>
                     <td className="p-4 text-xs text-slate-500">{formatThaiDateTime(item.createdAt)}</td>
                     <td className="p-4"><span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.status === 'unread' ? 'bg-blue-100 text-blue-700' : item.status === 'archived' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-700'}`}>{item.status === 'unread' ? 'ยังไม่อ่าน' : item.status === 'archived' ? 'เก็บถาวร' : 'อ่านแล้ว'}</span></td>
                     <td className="p-4"><button type="button" onClick={(event) => { event.stopPropagation(); setDeleteContactError(''); setContactToDelete(item); }} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"><Icon name="trash" size={14} />ลบ</button></td>
