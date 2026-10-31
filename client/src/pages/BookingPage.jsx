@@ -95,6 +95,14 @@ export default function BookingPage() {
     }));
   };
 
+  const updateBookingDate = (value) => {
+    if (value && isSunday(value)) {
+      setError('ร้านปิดวันอาทิตย์ กรุณาเลือกวันจันทร์–เสาร์');
+      return;
+    }
+    update('bookingDate', value);
+  };
+
   function getSlot(time) {
     return availability.find((slot) => slot.time === time) || {
       time,
@@ -162,7 +170,7 @@ export default function BookingPage() {
             </div>
             <label className="block max-w-sm text-sm font-semibold text-slate-700">
               วันที่เข้ารับบริการ
-              <input type="date" required min={getBangkokToday()} value={form.bookingDate} onChange={(e) => update('bookingDate', e.target.value)} className={`field ${selectedDateClosed ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : ''}`} />
+              <input type="date" required min={getBangkokToday()} value={form.bookingDate} onChange={(e) => updateBookingDate(e.target.value)} className={`field ${selectedDateClosed ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : ''}`} />
               {form.bookingDate && <span className="mt-2 block text-xs font-medium text-blue-700">{formatThaiDate(form.bookingDate, { withWeekday: true })}</span>}
               {selectedDateClosed && <span className="mt-2 block text-xs font-semibold text-rose-600">ร้านปิดทุกวันอาทิตย์ กรุณาเลือกวันจันทร์–เสาร์</span>}
             </label>
@@ -230,7 +238,7 @@ export default function BookingPage() {
             <div className="flex items-start justify-between gap-4 border-t border-dashed pt-4"><span className="text-slate-500">วันและเวลา</span><b className="max-w-[65%] text-right text-slate-800">{form.bookingDate ? formatThaiDate(form.bookingDate, { withWeekday: true }) : 'เลือกวันที่'}<span className="block text-xs font-medium text-slate-500">{form.bookingTime || 'เลือกช่วงเวลา'}</span></b></div>
           </div>
           <div className="mt-5 flex items-end justify-between border-t pt-4"><span className="pb-1 font-semibold text-slate-700">ยอดรวม</span><span className="text-3xl font-bold tracking-tight text-blue-600">฿{total.toLocaleString()}</span></div>
-          <button disabled={busy || !catalog.services.length || availabilityLoading || selectedDateClosed} className="primary-button mt-5 w-full rounded-xl py-3.5 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'กำลังบันทึก...' : user ? 'ยืนยันการจอง' : 'เข้าสู่ระบบเพื่อจอง'}<Icon name="arrow" size={18} /></button>
+          <button type="submit" disabled={busy || !catalog.services.length || availabilityLoading || selectedDateClosed} className="primary-button mt-5 w-full rounded-xl py-3.5 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'กำลังบันทึก...' : user ? 'ยืนยันการจอง' : 'เข้าสู่ระบบเพื่อจอง'}<Icon name="arrow" size={18} /></button>
           <p className="mt-3 text-center text-[11px] text-slate-400">ตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน</p>
           </div>
         </aside>
