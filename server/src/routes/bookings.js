@@ -178,7 +178,7 @@ async function getAvailability(date) {
   const [rows] = await pool.query(
     `SELECT booking_time AS bookingTime, COUNT(*) AS bookedCount
      FROM bookings
-     WHERE booking_date = ? AND status IN ('pending', 'confirmed', 'in_service')
+     WHERE booking_date = ? AND status <> 'cancelled'
      GROUP BY booking_time`,
     [date]
   );
@@ -265,7 +265,7 @@ router.post('/', authenticate, upload.single('slip'), async (req, res, next) => 
     const [slotRows] = await connection.query(
       `SELECT COUNT(*) AS bookedCount
        FROM bookings
-       WHERE booking_date = ? AND booking_time = ? AND status IN ('pending', 'confirmed', 'in_service')`,
+       WHERE booking_date = ? AND booking_time = ? AND status <> 'cancelled'`,
       [normalizedDate, normalizedTime]
     );
     const bookedCount = Number(slotRows[0]?.bookedCount || 0);
@@ -510,7 +510,7 @@ router.patch('/:code/reschedule', authenticate, async (req, res, next) => {
     }
     const [slotRows] = await connection.query(
       `SELECT COUNT(*) AS bookedCount FROM bookings
-       WHERE booking_date = ? AND booking_time = ? AND status IN ('pending', 'confirmed', 'in_service')`,
+       WHERE booking_date = ? AND booking_time = ? AND status <> 'cancelled'`,
       [bookingDate, bookingTime]
     );
     if (Number(slotRows[0]?.bookedCount || 0) >= getSlotCapacity()) {
