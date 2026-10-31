@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../db');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const { sendPrivateUpload } = require('../middleware/privateUpload');
+const { decodeMultipartFilename } = require('../utils/filename');
 
 const router = express.Router();
 router.use(authenticate, requireAdmin);
@@ -439,6 +440,11 @@ router.get('/contacts', async (_req, res, next) => {
               status, created_at AS createdAt
        FROM contacts ORDER BY created_at DESC`
     );
+    for (const contact of contacts) {
+      if (contact.attachmentOriginalName) {
+        contact.attachmentOriginalName = decodeMultipartFilename(contact.attachmentOriginalName);
+      }
+    }
     res.json({ contacts });
   } catch (error) { next(error); }
 });

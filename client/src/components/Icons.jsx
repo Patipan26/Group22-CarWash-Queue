@@ -10,6 +10,7 @@ const paths = {
   shield: <><path d="M12 3.5 19 6v5.5c0 4.5-3 7.4-7 9-4-1.6-7-4.5-7-9V6l7-2.5Z" /><path d="m8.5 12 2.2 2.2 4.8-4.8" /></>,
   message: <><path d="M4 5.5h16v11H9l-5 4v-15Z" /><path d="M8 10h8M8 13h5" /></>,
   upload: <><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5M5 19.5h14" /></>,
+  image: <><rect x="3.5" y="4" width="17" height="16" rx="2" /><circle cx="9" cy="10" r="1.5" /><path d="m20.5 15-5-5L6 19" /></>,
   user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.2 3.1-5 7-5s6.2 1.8 7 5" /></>,
   bell: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></>,
   dashboard: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,

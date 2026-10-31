@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('../db');
 const upload = require('../middleware/upload');
 const { optionalAuthenticate } = require('../middleware/auth');
+const { decodeMultipartFilename } = require('../utils/filename');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.post('/', optionalAuthenticate, upload.single('attachment'), async (req, 
     }
     const attachmentPath = req.file ? `/uploads/${req.file.filename}` : null;
     const attachmentOriginalName = req.file
-      ? String(req.file.originalname || 'ไฟล์แนบ').replace(/\\/g, '/').split('/').pop().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 255)
+      ? decodeMultipartFilename(req.file.originalname || 'ไฟล์แนบ').replace(/\\/g, '/').split('/').pop().replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 255)
       : null;
     await pool.query(
       `INSERT INTO contacts (user_id, sender_name, sender_contact, subject, message, attachment_path, attachment_original_name)
