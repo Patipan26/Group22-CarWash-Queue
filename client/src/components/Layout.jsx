@@ -111,7 +111,7 @@ export default function Layout({ children }) {
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 md:grid-cols-[1.3fr_1fr_1fr]">
           <div><span className="font-bold text-white">CarWash <span className="text-blue-300">Queue</span></span><p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">ระบบจองคิวล้างรถที่ช่วยให้คุณวางแผนเวลาได้ง่ายขึ้น</p></div>
           <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">เมนูหลัก</p><div className="mt-4 space-y-2 text-sm text-slate-400"><Link className="block hover:text-white" to="/services">บริการและราคา</Link><Link className="block hover:text-white" to="/booking">จองคิว</Link><Link className="block hover:text-white" to="/status">รายการของฉัน</Link></div></div>
-          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">เวลาทำการ</p><p className="mt-4 text-sm leading-6 text-slate-400">เปิดทุกวัน<br />09:00 - 16:00 น.</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">เวลาทำการ</p><p className="mt-4 text-sm leading-6 text-slate-400">เปิดวันจันทร์–เสาร์<br />09:00 - 16:00 น.</p></div>
         </div>
         <div className="border-t border-white/10 py-4 text-center text-xs text-slate-500">© 2026 CarWash Queue System</div>
       </footer>
