@@ -172,17 +172,6 @@ flowchart TB
     PAY <-->|ส่งรูปสลิป / รับผลตรวจ| SLIP
     C1 -.->|สแกน QR แล้วโอนเงิน| BANK
     SLIP -.->|ตรวจสอบรายการโอนกับธนาคาร| BANK
-
-    classDef client fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
-    classDef fe fill:#ede9fe,stroke:#7c3aed,color:#3b0764
-    classDef be fill:#dcfce7,stroke:#16a34a,color:#14532d
-    classDef data fill:#fef9c3,stroke:#ca8a04,color:#713f12
-    classDef ext fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
-    class C1,C2 client
-    class F1,F2,F3,F4,F5,F6,F7,A1,A2,A3,A4,A5 fe
-    class GW,AUTH,BOOK,PAY,CAT,LOYAL,NOTI,MSG,REP be
-    class DB,FS data
-    class GOOGLE,SLIP,BANK ext
 ```
 ---
 
@@ -190,125 +179,120 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    ROOT["car-wash-project<br/>ระบบจองคิวล้างรถออนไลน์"]:::root
+    ROOT["car-wash-project<br/>ระบบจองคิวล้างรถออนไลน์"]
 
     %% ================= ROOT FILES =================
-    ROOT --> R1[".gitignore<br/>ไฟล์ที่ไม่นำขึ้น Git"]:::file
-    ROOT --> R2[".keep<br/>ไฟล์เปล่าเพื่อเก็บโฟลเดอร์"]:::file
-    ROOT --> R3["docker-compose.yml<br/>รันทุก service ตอนพัฒนา"]:::file
-    ROOT --> R4["docker-compose.production.yml<br/>ตั้งค่า Docker สำหรับ production"]:::file
-    ROOT --> R5["README.md<br/>เอกสารอธิบายโปรเจกต์"]:::file
+    ROOT --> R1[".gitignore<br/>ไฟล์ที่ไม่นำขึ้น Git"]
+    ROOT --> R2[".keep<br/>ไฟล์เปล่าเพื่อเก็บโฟลเดอร์"]
+    ROOT --> R3["docker-compose.yml<br/>รันทุก service ตอนพัฒนา"]
+    ROOT --> R4["docker-compose.production.yml<br/>ตั้งค่า Docker สำหรับ production"]
+    ROOT --> R5["README.md<br/>เอกสารอธิบายโปรเจกต์"]
 
     %% ================= .github =================
-    ROOT --> GH["📁 .github"]:::folder
-    GH --> GHW["📁 workflows<br/>GitHub Actions"]:::folder
-    GHW --> GHW1["deploy.yml<br/>CI/CD deploy อัตโนมัติ"]:::file
+    ROOT --> GH["📁 .github"]
+    GH --> GHW["📁 workflows<br/>GitHub Actions"]
+    GHW --> GHW1["deploy.yml<br/>CI/CD deploy อัตโนมัติ"]
 
     %% ================= client =================
-    ROOT --> CL["📁 client<br/>Frontend: React + Vite + Tailwind"]:::folder
-    CL --> CL1[".dockerignore<br/>ไฟล์ที่ไม่ใส่ใน Docker image"]:::file
-    CL --> CL2[".env.example<br/>ตัวอย่างตัวแปรสภาพแวดล้อม"]:::file
-    CL --> CL3["Dockerfile<br/>build image ฝั่งหน้าเว็บ"]:::file
-    CL --> CL4["index.html<br/>หน้า HTML หลักของแอป"]:::file
-    CL --> CL5["nginx.conf<br/>เสิร์ฟไฟล์เว็บใน container"]:::file
-    CL --> CL6["package.json<br/>รายการ dependencies และ scripts"]:::file
-    CL --> CL7["package-lock.json<br/>ล็อกเวอร์ชัน dependencies"]:::file
-    CL --> CL8["postcss.config.js<br/>ตั้งค่า PostCSS"]:::file
-    CL --> CL9["tailwind.config.js<br/>ตั้งค่า Tailwind CSS"]:::file
-    CL --> CL10["vercel.json<br/>ตั้งค่า deploy บน Vercel"]:::file
-    CL --> CL11["vite.config.js<br/>ตั้งค่า Vite build tool"]:::file
+    ROOT --> CL["📁 client<br/>Frontend: React + Vite + Tailwind"]
+    CL --> CL1[".dockerignore<br/>ไฟล์ที่ไม่ใส่ใน Docker image"]
+    CL --> CL2[".env.example<br/>ตัวอย่างตัวแปรสภาพแวดล้อม"]
+    CL --> CL3["Dockerfile<br/>build image ฝั่งหน้าเว็บ"]
+    CL --> CL4["index.html<br/>หน้า HTML หลักของแอป"]
+    CL --> CL5["nginx.conf<br/>เสิร์ฟไฟล์เว็บใน container"]
+    CL --> CL6["package.json<br/>รายการ dependencies และ scripts"]
+    CL --> CL7["package-lock.json<br/>ล็อกเวอร์ชัน dependencies"]
+    CL --> CL8["postcss.config.js<br/>ตั้งค่า PostCSS"]
+    CL --> CL9["tailwind.config.js<br/>ตั้งค่า Tailwind CSS"]
+    CL --> CL10["vercel.json<br/>ตั้งค่า deploy บน Vercel"]
+    CL --> CL11["vite.config.js<br/>ตั้งค่า Vite build tool"]
 
-    CL --> PUB["📁 public"]:::folder
-    PUB --> IMG["📁 images<br/>รูปภาพที่ใช้ในเว็บ"]:::folder
-    IMG --> IMG1["car-wash-1 ถึง 4.png<br/>รูปประกอบหน้าเว็บ"]:::file
-    IMG --> IMG2["cash-payment.png<br/>ไอคอนชำระเงินสด"]:::file
-    IMG --> IMG3["slip2go-logo.png<br/>โลโก้ระบบตรวจสลิป"]:::file
+    CL --> PUB["📁 public"]
+    PUB --> IMG["📁 images<br/>รูปภาพที่ใช้ในเว็บ"]
+    IMG --> IMG1["car-wash-1 ถึง 4.png<br/>รูปประกอบหน้าเว็บ"]
+    IMG --> IMG2["cash-payment.png<br/>ไอคอนชำระเงินสด"]
+    IMG --> IMG3["slip2go-logo.png<br/>โลโก้ระบบตรวจสลิป"]
 
-    CL --> SRC["📁 src<br/>ซอร์สโค้ดหน้าเว็บ"]:::folder
-    SRC --> S1["main.jsx<br/>จุดเริ่มต้นแอป React"]:::file
-    SRC --> S2["App.jsx<br/>กำหนด routes ของแต่ละหน้า"]:::file
-    SRC --> S3["api.js<br/>ฟังก์ชันเรียก Backend API"]:::file
-    SRC --> S4["auth.jsx<br/>จัดการสถานะล็อกอิน"]:::file
-    SRC --> S5["index.css<br/>สไตล์หลักและ Tailwind"]:::file
+    CL --> SRC["📁 src<br/>ซอร์สโค้ดหน้าเว็บ"]
+    SRC --> S1["main.jsx<br/>จุดเริ่มต้นแอป React"]
+    SRC --> S2["App.jsx<br/>กำหนด routes ของแต่ละหน้า"]
+    SRC --> S3["api.js<br/>ฟังก์ชันเรียก Backend API"]
+    SRC --> S4["auth.jsx<br/>จัดการสถานะล็อกอิน"]
+    SRC --> S5["index.css<br/>สไตล์หลักและ Tailwind"]
 
-    SRC --> COMP["📁 components<br/>คอมโพเนนต์ที่ใช้ซ้ำ"]:::folder
-    COMP --> CO1["GoogleSignInButton.jsx<br/>ปุ่มเข้าสู่ระบบด้วย Google"]:::file
-    COMP --> CO2["Icons.jsx<br/>รวมไอคอน SVG"]:::file
-    COMP --> CO3["Layout.jsx<br/>โครงหน้า header / footer"]:::file
-    COMP --> CO4["RouteGuards.jsx<br/>ป้องกันหน้าที่ต้องล็อกอิน / admin"]:::file
+    SRC --> COMP["📁 components<br/>คอมโพเนนต์ที่ใช้ซ้ำ"]
+    COMP --> CO1["GoogleSignInButton.jsx<br/>ปุ่มเข้าสู่ระบบด้วย Google"]
+    COMP --> CO2["Icons.jsx<br/>รวมไอคอน SVG"]
+    COMP --> CO3["Layout.jsx<br/>โครงหน้า header / footer"]
+    COMP --> CO4["RouteGuards.jsx<br/>ป้องกันหน้าที่ต้องล็อกอิน / admin"]
 
-    SRC --> PG["📁 pages<br/>หน้าต่าง ๆ ของเว็บ"]:::folder
-    PG --> PG1["HomePage.jsx<br/>หน้าแรก"]:::file
-    PG --> PG2["ServicesPage.jsx<br/>รายการบริการและราคา"]:::file
-    PG --> PG3["BookingPage.jsx<br/>จองคิวล้างรถ"]:::file
-    PG --> PG4["PaymentPage.jsx<br/>ชำระเงิน / แนบสลิป"]:::file
-    PG --> PG5["StatusPage.jsx<br/>สถานะการจอง"]:::file
-    PG --> PG6["TrackingPage.jsx<br/>ติดตามคิว"]:::file
-    PG --> PG7["NotificationsPage.jsx<br/>การแจ้งเตือน"]:::file
-    PG --> PG8["ProfilePage.jsx<br/>โปรไฟล์และแต้มสะสม"]:::file
-    PG --> PG9["ContactPage.jsx<br/>ติดต่อร้าน / แนบไฟล์"]:::file
-    PG --> PG10["AuthPage.jsx<br/>สมัครสมาชิก / เข้าสู่ระบบ"]:::file
-    PG --> PG11["AdminPage.jsx<br/>แผงควบคุมผู้ดูแลระบบ"]:::file
+    SRC --> PG["📁 pages<br/>หน้าต่าง ๆ ของเว็บ"]
+    PG --> PG1["HomePage.jsx<br/>หน้าแรก"]
+    PG --> PG2["ServicesPage.jsx<br/>รายการบริการและราคา"]
+    PG --> PG3["BookingPage.jsx<br/>จองคิวล้างรถ"]
+    PG --> PG4["PaymentPage.jsx<br/>ชำระเงิน / แนบสลิป"]
+    PG --> PG5["StatusPage.jsx<br/>สถานะการจอง"]
+    PG --> PG6["TrackingPage.jsx<br/>ติดตามคิว"]
+    PG --> PG7["NotificationsPage.jsx<br/>การแจ้งเตือน"]
+    PG --> PG8["ProfilePage.jsx<br/>โปรไฟล์และแต้มสะสม"]
+    PG --> PG9["ContactPage.jsx<br/>ติดต่อร้าน / แนบไฟล์"]
+    PG --> PG10["AuthPage.jsx<br/>สมัครสมาชิก / เข้าสู่ระบบ"]
+    PG --> PG11["AdminPage.jsx<br/>แผงควบคุมผู้ดูแลระบบ"]
 
-    SRC --> CUT["📁 utils<br/>ฟังก์ชันช่วยเหลือ"]:::folder
-    CUT --> CUT1["date.js<br/>จัดรูปแบบวันที่และเวลา"]:::file
+    SRC --> CUT["📁 utils<br/>ฟังก์ชันช่วยเหลือ"]
+    CUT --> CUT1["date.js<br/>จัดรูปแบบวันที่และเวลา"]
 
     %% ================= database =================
-    ROOT --> DB["📁 database<br/>โครงสร้างฐานข้อมูล"]:::folder
-    DB --> DB1["schema.sql<br/>สร้างตารางทั้งหมด"]:::file
-    DB --> DB2["seed.sql<br/>ข้อมูลตั้งต้น"]:::file
-    DB --> MIG["📁 migrations<br/>อัปเดตฐานข้อมูลตามลำดับ"]:::folder
-    MIG --> M2["002_booking_slot_index.sql<br/>index ช่วงเวลาการจอง"]:::file
-    MIG --> M3["003_google_auth.sql<br/>รองรับล็อกอิน Google"]:::file
-    MIG --> M4["004_loyalty_points.sql<br/>ระบบแต้มสะสม"]:::file
-    MIG --> M5["005_profile_notifications.sql<br/>โปรไฟล์และการแจ้งเตือน"]:::file
-    MIG --> M6["006_booking_in_service_status.sql<br/>สถานะกำลังให้บริการ"]:::file
-    MIG --> M7["007_payment_summary.sql<br/>สรุปข้อมูลการชำระเงิน"]:::file
-    MIG --> M8["008_slip_verification_history.sql<br/>ประวัติการตรวจสลิป"]:::file
-    MIG --> M9["009_payment_timestamp.sql<br/>เวลาที่ชำระเงิน"]:::file
-    MIG --> M10["010_cash_payment_method.sql<br/>เพิ่มการชำระด้วยเงินสด"]:::file
-    MIG --> M11["011_contact_attachment_original_name.sql<br/>เก็บชื่อไฟล์แนบต้นฉบับ"]:::file
+    ROOT --> DB["📁 database<br/>โครงสร้างฐานข้อมูล"]
+    DB --> DB1["schema.sql<br/>สร้างตารางทั้งหมด"]
+    DB --> DB2["seed.sql<br/>ข้อมูลตั้งต้น"]
+    DB --> MIG["📁 migrations<br/>อัปเดตฐานข้อมูลตามลำดับ"]
+    MIG --> M2["002_booking_slot_index.sql<br/>index ช่วงเวลาการจอง"]
+    MIG --> M3["003_google_auth.sql<br/>รองรับล็อกอิน Google"]
+    MIG --> M4["004_loyalty_points.sql<br/>ระบบแต้มสะสม"]
+    MIG --> M5["005_profile_notifications.sql<br/>โปรไฟล์และการแจ้งเตือน"]
+    MIG --> M6["006_booking_in_service_status.sql<br/>สถานะกำลังให้บริการ"]
+    MIG --> M7["007_payment_summary.sql<br/>สรุปข้อมูลการชำระเงิน"]
+    MIG --> M8["008_slip_verification_history.sql<br/>ประวัติการตรวจสลิป"]
+    MIG --> M9["009_payment_timestamp.sql<br/>เวลาที่ชำระเงิน"]
+    MIG --> M10["010_cash_payment_method.sql<br/>เพิ่มการชำระด้วยเงินสด"]
+    MIG --> M11["011_contact_attachment_original_name.sql<br/>เก็บชื่อไฟล์แนบต้นฉบับ"]
 
     %% ================= deploy =================
-    ROOT --> DP["📁 deploy<br/>ไฟล์สำหรับเซิร์ฟเวอร์จริง"]:::folder
-    DP --> DP1["nginx-carwash.conf.example<br/>ตัวอย่าง Nginx reverse proxy"]:::file
+    ROOT --> DP["📁 deploy<br/>ไฟล์สำหรับเซิร์ฟเวอร์จริง"]
+    DP --> DP1["nginx-carwash.conf.example<br/>ตัวอย่าง Nginx reverse proxy"]
 
     %% ================= server =================
-    ROOT --> SV["📁 server<br/>Backend: Node.js + Express"]:::folder
-    SV --> SV1[".dockerignore<br/>ไฟล์ที่ไม่ใส่ใน Docker image"]:::file
-    SV --> SV2[".env.example<br/>ตัวอย่างตัวแปร เช่น DB, secret"]:::file
-    SV --> SV3["Dockerfile<br/>build image ฝั่ง API"]:::file
-    SV --> SV4["package.json<br/>รายการ dependencies และ scripts"]:::file
-    SV --> SV5["package-lock.json<br/>ล็อกเวอร์ชัน dependencies"]:::file
+    ROOT --> SV["📁 server<br/>Backend: Node.js + Express"]
+    SV --> SV1[".dockerignore<br/>ไฟล์ที่ไม่ใส่ใน Docker image"]
+    SV --> SV2[".env.example<br/>ตัวอย่างตัวแปร เช่น DB, secret"]
+    SV --> SV3["Dockerfile<br/>build image ฝั่ง API"]
+    SV --> SV4["package.json<br/>รายการ dependencies และ scripts"]
+    SV --> SV5["package-lock.json<br/>ล็อกเวอร์ชัน dependencies"]
 
-    SV --> SSRC["📁 src<br/>ซอร์สโค้ด API"]:::folder
-    SSRC --> SS1["server.js<br/>จุดเริ่มต้น Express server"]:::file
-    SSRC --> SS2["db.js<br/>เชื่อมต่อฐานข้อมูล"]:::file
+    SV --> SSRC["📁 src<br/>ซอร์สโค้ด API"]
+    SSRC --> SS1["server.js<br/>จุดเริ่มต้น Express server"]
+    SSRC --> SS2["db.js<br/>เชื่อมต่อฐานข้อมูล"]
 
-    SSRC --> MW["📁 middleware<br/>ทำงานก่อนเข้า route"]:::folder
-    MW --> MW1["auth.js<br/>ตรวจ token และสิทธิ์ผู้ใช้"]:::file
-    MW --> MW2["upload.js<br/>อัปโหลดไฟล์ทั่วไป"]:::file
-    MW --> MW3["privateUpload.js<br/>อัปโหลดไฟล์ส่วนตัว เช่น สลิป"]:::file
+    SSRC --> MW["📁 middleware<br/>ทำงานก่อนเข้า route"]
+    MW --> MW1["auth.js<br/>ตรวจ token และสิทธิ์ผู้ใช้"]
+    MW --> MW2["upload.js<br/>อัปโหลดไฟล์ทั่วไป"]
+    MW --> MW3["privateUpload.js<br/>อัปโหลดไฟล์ส่วนตัว เช่น สลิป"]
 
-    SSRC --> RT["📁 routes<br/>API endpoints"]:::folder
-    RT --> RT1["auth.js<br/>สมัคร / ล็อกอิน / Google"]:::file
-    RT --> RT2["services.js<br/>ข้อมูลบริการ"]:::file
-    RT --> RT3["bookings.js<br/>การจองและการชำระเงิน"]:::file
-    RT --> RT4["profile.js<br/>ข้อมูลโปรไฟล์ผู้ใช้"]:::file
-    RT --> RT5["notifications.js<br/>การแจ้งเตือน"]:::file
-    RT --> RT6["contacts.js<br/>ข้อความติดต่อ"]:::file
-    RT --> RT7["admin.js<br/>API สำหรับผู้ดูแลระบบ"]:::file
+    SSRC --> RT["📁 routes<br/>API endpoints"]
+    RT --> RT1["auth.js<br/>สมัคร / ล็อกอิน / Google"]
+    RT --> RT2["services.js<br/>ข้อมูลบริการ"]
+    RT --> RT3["bookings.js<br/>การจองและการชำระเงิน"]
+    RT --> RT4["profile.js<br/>ข้อมูลโปรไฟล์ผู้ใช้"]
+    RT --> RT5["notifications.js<br/>การแจ้งเตือน"]
+    RT --> RT6["contacts.js<br/>ข้อความติดต่อ"]
+    RT --> RT7["admin.js<br/>API สำหรับผู้ดูแลระบบ"]
 
-    SSRC --> SUT["📁 utils<br/>ฟังก์ชันช่วยเหลือ"]:::folder
-    SUT --> SUT1["filename.js<br/>ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัย"]:::file
+    SSRC --> SUT["📁 utils<br/>ฟังก์ชันช่วยเหลือ"]
+    SUT --> SUT1["filename.js<br/>ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัย"]
 
-    SV --> UP["📁 uploads<br/>เก็บไฟล์ที่ผู้ใช้อัปโหลด"]:::folder
-    UP --> UP1[".gitkeep<br/>เก็บโฟลเดอร์ว่างไว้ใน Git"]:::file
-
-    %% ================= STYLES =================
-    classDef root fill:#2b6cb0,stroke:#1a4971,color:#ffffff,font-weight:bold
-    classDef folder fill:#fff4d6,stroke:#e0a800,color:#333333,font-weight:bold
-    classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333333
+    SV --> UP["📁 uploads<br/>เก็บไฟล์ที่ผู้ใช้อัปโหลด"]
+    UP --> UP1[".gitkeep<br/>เก็บโฟลเดอร์ว่างไว้ใน Git"]
 ```
 
 ####  Root
