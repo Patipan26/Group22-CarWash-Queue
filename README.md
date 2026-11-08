@@ -329,6 +329,7 @@ flowchart LR
 | `notifications.js` | การแจ้งเตือนของผู้ใช้ |
 | `contacts.js` | รับข้อความติดต่อจากลูกค้า |
 | `admin.js` | API สำหรับผู้ดูแลระบบ |
+
 2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
 ```mermaid
 erDiagram
