@@ -235,7 +235,7 @@ flowchart LR
     classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333333
 ```
 
-#### 📦 Root
+####  Root
 
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
@@ -247,7 +247,7 @@ flowchart LR
 | `.github/workflows/deploy.yml` | GitHub Actions สำหรับ deploy อัตโนมัติเมื่อ push โค้ด |
 | `deploy/nginx-carwash.conf.example` | ตัวอย่างค่าตั้ง Nginx reverse proxy บนเซิร์ฟเวอร์จริง |
 
-#### 💻 client — Frontend (React + Vite + Tailwind)
+####  client — Frontend (React + Vite + Tailwind)
 
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
@@ -266,7 +266,7 @@ flowchart LR
 | `client/public/images/cash-payment.png` | ไอคอนชำระเงินสด |
 | `client/public/images/slip2go-logo.png` | โลโก้ระบบตรวจสลิป Slip2Go |
 
-#### 📁 client/src — ซอร์สโค้ดหน้าเว็บ
+####  client/src — ซอร์สโค้ดหน้าเว็บ
 
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
@@ -281,7 +281,7 @@ flowchart LR
 | `client/src/components/Layout.jsx` | โครงหน้าเว็บ (header / footer / เมนู) |
 | `client/src/components/RouteGuards.jsx` | ป้องกันหน้าที่ต้องล็อกอินหรือเฉพาะ admin |
 
-#### 📄 client/src/pages — หน้าต่าง ๆ ของเว็บ
+####  client/src/pages — หน้าต่าง ๆ ของเว็บ
 
 | ไฟล์ | คำอธิบาย |
 |---|---|
@@ -297,7 +297,7 @@ flowchart LR
 | `AuthPage.jsx` | สมัครสมาชิก / เข้าสู่ระบบ |
 | `AdminPage.jsx` | แผงควบคุมสำหรับผู้ดูแลระบบ |
 
-#### 🗄️ database — ฐานข้อมูล
+####  database — ฐานข้อมูล
 
 | ไฟล์ | คำอธิบาย |
 |---|---|
@@ -314,7 +314,7 @@ flowchart LR
 | `migrations/010_cash_payment_method.sql` | เพิ่มวิธีชำระด้วยเงินสด |
 | `migrations/011_contact_attachment_original_name.sql` | เก็บชื่อไฟล์แนบต้นฉบับของข้อความติดต่อ |
 
-#### 🖥️ server — Backend (Node.js + Express)
+####  server — Backend (Node.js + Express)
 
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
@@ -331,7 +331,7 @@ flowchart LR
 | `server/src/middleware/privateUpload.js` | จัดการไฟล์ส่วนตัว เช่น สลิปโอนเงิน |
 | `server/src/utils/filename.js` | ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัยและไม่ซ้ำกัน |
 
-#### 🔌 server/src/routes — API Endpoints
+####  server/src/routes — API Endpoints
 
 | ไฟล์ | คำอธิบาย |
 |---|---|
