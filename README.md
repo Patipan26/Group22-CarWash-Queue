@@ -800,8 +800,8 @@ erDiagram
 
 | รายการ | เทคโนโลยี / เวอร์ชัน | รายละเอียด |
 |---|---|---|
-| VPS | ⚠️ ระบุผู้ให้บริการ | เซิร์ฟเวอร์ที่รันระบบ เข้าถึงผ่าน SSH |
-| OS | ⚠️ ระบุ เช่น Ubuntu 24.04 LTS | ระบบปฏิบัติการของ VPS |
+| VPS | Hostinger VPS | เซิร์ฟเวอร์ที่รันระบบ เข้าถึงผ่าน SSH |
+| OS | Ubuntu 26.04 LTS | ระบบปฏิบัติการของ VPS |
 | Domain | `carwash.carcareku.tech` | Subdomain ของระบบ |
 | Web Server (บน VPS) | Nginx | Reverse Proxy รับคำขอจากโดเมน ส่งต่อไปที่ Container `127.0.0.1:16200` |
 | Web Server (ใน Container) | Nginx (`nginx:alpine`) | เสิร์ฟไฟล์ React ที่ Build แล้ว และส่งต่อ `/api/` ไปที่ Backend |
@@ -821,7 +821,7 @@ erDiagram
 | Vite Dev Server | 6.4.3 | รัน Frontend ตอนพัฒนา (`npm run dev`) |
 | Node.js `--watch` | 20 | รีสตาร์ต Backend อัตโนมัติเมื่อแก้โค้ด (`npm run dev`) |
 | phpMyAdmin | 5.2 | ดูและแก้ข้อมูลในฐานข้อมูลตอนพัฒนา |
-| Code Editor | ⚠️ ระบุ เช่น Visual Studio Code | เขียนโค้ด |
+| Code Editor | Visual Studio Code | เขียนโค้ด |
 
 ---
 
