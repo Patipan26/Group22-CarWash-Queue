@@ -673,273 +673,332 @@ erDiagram
 | **ป้องกันสลิปซ้ำ** | ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true` |
 | **Index ที่ควรมี** | `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)` |
 
-### 4) กระบวนการทำงานของระบบ (System Workflow)
+4) กระบวนการทำงานของระบบ (System Workflow)
 
 4.1 ภาพรวมการทำงานของทั้งระบบ (Use Case Diagram)
+
 ```mermaid
 flowchart LR
+    G(("ผู้เยี่ยมชม"))
     C(("ลูกค้า"))
     A(("แอดมิน"))
 
-    subgraph SHARE["ใช้ร่วมกัน"]
+    subgraph PUB["ใช้ได้โดยไม่ต้องเข้าสู่ระบบ"]
         direction TB
-        S1(["สมัครสมาชิก"])
-        S2(["เข้าสู่ระบบ<br/>อีเมล / Google"])
+        P1(["ดูหน้าแรก / บริการและราคา"])
+        P2(["ติดต่อเรา + แนบไฟล์"])
+        P3(["สมัครสมาชิก / เข้าสู่ระบบ<br/>อีเมล หรือ Google"])
     end
 
-    subgraph CUS["ส่วนของลูกค้า"]
+    subgraph BOOK["การจองและชำระเงิน"]
         direction TB
-        C1(["ดูบริการและราคา"])
-        C2(["จองคิวล้างรถ"])
-        C3(["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด"])
-        C4(["ติดตามสถานะคิว"])
-        C5(["เลื่อน / ยกเลิกคิว"])
-        C6(["โปรไฟล์ / แต้มสะสม / แจ้งเตือน"])
-        C7(["ติดต่อเรา"])
+        B1(["จองคิว เลือกวัน เวลา<br/>บริการหลัก + บริการเสริม"])
+        B2(["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด / โค้ดส่วนลด"])
     end
 
-    subgraph ADM["ส่วนของแอดมิน /admin"]
+    subgraph AFTER["หลังการจอง"]
         direction TB
-        A1(["ดูรายการจอง"])
-        A2(["ยืนยันการชำระเงิน"])
-        A3(["อัปเดตสถานะงาน"])
-        A4(["จัดการข้อมูลลูกค้า"])
-        A5(["จัดการบริการและราคา"])
-        A6(["ดูรายรับ"])
-        A7(["ตอบข้อความ"])
+        F1(["ติดตามสถานะคิว"])
+        F2(["เลื่อน / ยกเลิกคิว"])
+        F3(["การแจ้งเตือน"])
     end
 
-    C --- SHARE
-    C --- CUS
-    SHARE --- A
+    subgraph ACC["บัญชีของฉัน"]
+        direction TB
+        M1(["แก้ไขโปรไฟล์ / เปลี่ยนรหัสผ่าน"])
+        M2(["จัดการรถของฉัน"])
+        M3(["ดูแต้มสะสม"])
+    end
+
+    subgraph ADM["Admin Dashboard /admin"]
+        direction TB
+        D1(["รายการจอง<br/>ยืนยันการชำระ / อัปเดตสถานะงาน"])
+        D2(["ข้อมูลลูกค้า"])
+        D3(["บริการและราคา<br/>บริการหลัก / บริการเสริม"])
+        D4(["รายรับ"])
+        D5(["ข้อความจากลูกค้า"])
+    end
+
+    G --- PUB
+    C --- BOOK
+    C --- AFTER
+    C --- ACC
+    PUB --- A
     ADM --- A
 ```
 
+
 4.2 ภาพรวมการทำงานของทั้งระบบ (Flowchart)
+
 ```mermaid
 flowchart TD
-    S(["เริ่มต้น"]) --> L1{"มีบัญชีหรือยัง"}
-    L1 -->|"ยังไม่มี"| L2["สมัครสมาชิก"]
-    L1 -->|"มีแล้ว"| L3["เข้าสู่ระบบ<br/>อีเมล / Google"]
-    L2 --> L3
-    L3 --> R{"ตรวจสอบสิทธิ์"}
+    S(["เปิดเว็บไซต์"]) --> H["หน้าแรก / บริการและราคา"]
+    H --> L{"เข้าสู่ระบบแล้วหรือยัง"}
+    L -->|"ยัง"| AU["สมัครสมาชิก / เข้าสู่ระบบ<br/>อีเมล หรือ Google"]
+    AU --> R
+    L -->|"แล้ว"| R{"role ของผู้ใช้"}
 
-    R -->|"ลูกค้า"| C1["หน้าแรก<br/>ดูบริการและราคา"]
-    C1 --> C2["จองคิว<br/>เลือกบริการ วัน เวลา"]
-    C1 --> M1["โปรไฟล์ / แต้มสะสม / แจ้งเตือน"]
-    C1 --> M2["ติดต่อเรา"]
-    C2 --> C3["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด"]
-    C3 --> C4["ติดตามสถานะคิว<br/>อัปเดตอัตโนมัติทุก 15 วินาที"]
-    C4 --> C5{"ต้องการเปลี่ยนคิวหรือไม่"}
-    C5 -->|"เลื่อนคิว"| C6["เลือกวันเวลาใหม่"]
-    C5 -->|"ยกเลิกคิว"| C7["ยกเลิกคิว"]
-    C5 -->|"ไม่เปลี่ยน"| C8["ล้างรถเสร็จ<br/>ได้รับแต้มสะสม"]
-    C6 --> C4
+    R -->|"customer"| C1["จองคิว<br/>เลือกวัน ช่วงเวลา บริการ ข้อมูลรถ"]
+    C1 --> C2["ระบบสร้างการจอง<br/>สถานะ: รอยืนยันการจอง"]
+    C2 --> C3{"เลือกวิธีชำระเงิน"}
+    C3 -->|"QR พร้อมเพย์"| C4["อัปโหลดสลิป<br/>Slip2Go ตรวจสอบอัตโนมัติ"]
+    C4 -->|"ไม่ผ่าน"| C3
+    C4 -->|"ผ่าน"| C6["ชำระเงินแล้ว"]
+    C3 -->|"เงินสด"| C5["แจ้งชำระเงินสด<br/>รอแอดมินยืนยันรับเงิน"]
+    C5 --> C6
+    C6 --> C7["ติดตามสถานะคิว<br/>อัปเดตอัตโนมัติทุก 15 วินาที"]
+    C7 --> C8{"ต้องการเปลี่ยนคิวหรือไม่"}
+    C8 -->|"เลื่อนคิว"| C9["เลือกวันเวลาใหม่"]
+    C9 --> C7
+    C8 -->|"ยกเลิก"| C10["ยกเลิกการจอง"]
+    C8 -->|"ไม่เปลี่ยน"| C11["รับรถ ได้รับแต้มสะสม"]
 
-    R -->|"แอดมิน"| A0["Admin Dashboard"]
+    R -->|"admin"| A0["Admin Dashboard"]
     A0 --> A1["รายการจอง"]
-    A1 --> A2["ยืนยันการชำระเงิน"]
-    A2 --> A3["อัปเดตสถานะงาน<br/>กำลังล้าง / เสร็จสิ้น"]
+    A1 --> A2["ยืนยันการชำระเงินสด"]
+    A2 --> A3["อัปเดตสถานะงาน<br/>รับรถเข้าคิว → กำลังให้บริการ → พร้อมรับรถ"]
     A0 --> A4["ข้อมูลลูกค้า"]
     A0 --> A5["บริการและราคา"]
     A0 --> A6["รายรับ"]
     A0 --> A7["ข้อความ"]
 
-    C7 --> E(["สิ้นสุด"])
-    C8 --> E
+    C10 --> E(["สิ้นสุด"])
+    C11 --> E
     A3 --> E
 
+    classDef common fill:#dcfce7,stroke:#16a34a,color:#000
     classDef customer fill:#dbeafe,stroke:#2563eb,color:#000
     classDef admin fill:#ffedd5,stroke:#ea580c,color:#000
-    classDef common fill:#dcfce7,stroke:#16a34a,color:#000
-    class C1,C2,C3,C4,C5,C6,C7,C8,M1,M2 customer
+    class H,L,AU,R common
+    class C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 customer
     class A0,A1,A2,A3,A4,A5,A6,A7 admin
-    class L1,L2,L3,R common
 ```
-สีในแผนภาพ: เขียว = ส่วนที่ใช้ร่วมกัน, ฟ้า = ฝั่งลูกค้า, ส้ม = ฝั่งแอดมิน
 
-### 4.3 ฟังก์ชันหลักที่ 1: สมัครสมาชิก / เข้าสู่ระบบ
 
-1. ผู้ใช้กรอกอีเมลและรหัสผ่าน หรือกดเข้าสู่ระบบด้วย Google
-2. Frontend ตรวจสอบรูปแบบข้อมูล แล้วส่งคำขอไปที่ Backend API
-3. Backend ตรวจสอบข้อมูลกับฐานข้อมูล (กรณี Google จะยืนยัน Token กับ Google ก่อน)
-4. ถ้าถูกต้อง Backend สร้าง Token ส่งกลับ พร้อมสิทธิ์ผู้ใช้
-5. Frontend เก็บ Token แล้วพาไปหน้าลูกค้า หรือหน้า /admin ตามสิทธิ์
+4.3 ฟังก์ชันหลักที่ 1: สมัครสมาชิก / เข้าสู่ระบบ
+
 
 ```mermaid
 sequenceDiagram
     actor U as ผู้ใช้
-    participant FE as Frontend
-    participant BE as Backend API
-    participant G as Google OAuth
-    participant DB as Database
+    participant FE as Frontend (React)
+    participant BE as Backend API (Express)
+    participant GG as Google
+    participant DB as MySQL
 
-    alt ล็อกอินด้วยอีเมล
+    alt สมัครสมาชิก
         U->>FE: กรอกอีเมลและรหัสผ่าน
-        FE->>FE: ตรวจสอบรูปแบบข้อมูล
-        FE->>BE: POST เข้าสู่ระบบ
-        BE->>DB: ค้นหาผู้ใช้
-        DB-->>BE: ข้อมูลผู้ใช้
-        BE->>BE: ตรวจสอบรหัสผ่าน
-    else ล็อกอินด้วย Google
+        FE->>BE: POST /api/auth/register
+        BE->>DB: ตรวจสอบอีเมลซ้ำในตาราง users
+        alt อีเมลซ้ำ
+            BE-->>FE: 409 อีเมลนี้มีบัญชีแล้ว
+            FE-->>U: แสดงข้อความแจ้งเตือน
+        else อีเมลยังไม่ถูกใช้
+            BE->>BE: เข้ารหัสรหัสผ่านด้วย bcrypt
+            BE->>DB: INSERT users (role = customer)
+        end
+    else เข้าสู่ระบบด้วยอีเมล
+        U->>FE: กรอกอีเมลและรหัสผ่าน
+        FE->>BE: POST /api/auth/login
+        BE->>DB: SELECT users WHERE email
+        DB-->>BE: ข้อมูลผู้ใช้ + password_hash
+        BE->>BE: bcrypt.compare
+        alt รหัสผ่านไม่ถูกต้อง
+            BE-->>FE: 401 อีเมลหรือรหัสผ่านไม่ถูกต้อง
+            FE-->>U: แสดงข้อความแจ้งเตือน
+        end
+    else เข้าสู่ระบบด้วย Google
         U->>FE: กดปุ่ม Google
-        FE->>G: ขอยืนยันตัวตน
-        G-->>FE: ส่ง Google Token
-        FE->>BE: ส่ง Google Token
-        BE->>G: ตรวจสอบ Token
-        G-->>BE: ข้อมูลบัญชี Google
-        BE->>DB: ค้นหาหรือสร้างผู้ใช้ใหม่
-        DB-->>BE: ข้อมูลผู้ใช้
+        FE->>GG: ขอยืนยันตัวตน
+        GG-->>FE: ID Token (credential)
+        FE->>BE: POST /api/auth/google
+        BE->>GG: verifyIdToken
+        GG-->>BE: ข้อมูลบัญชี Google
+        BE->>DB: ค้นหาจาก google_id / email หรือสร้างผู้ใช้ใหม่
     end
 
-    alt ข้อมูลถูกต้อง
-        BE-->>FE: ส่ง Token และสิทธิ์ผู้ใช้
-        FE->>FE: เก็บ Token
-        FE-->>U: ไปหน้าลูกค้า หรือหน้า /admin
-    else ข้อมูลไม่ถูกต้อง
-        BE-->>FE: แจ้งข้อผิดพลาด
-        FE-->>U: แสดงข้อความแจ้งเตือน
+    BE->>BE: สร้าง JWT อายุ 7 วัน
+    BE-->>FE: Set-Cookie (httpOnly) + ข้อมูลผู้ใช้
+    alt role = admin
+        FE-->>U: ไปหน้า /admin
+    else role = customer
+        FE-->>U: ไปหน้าแรก
     end
 ```
 
-### 4.4 ฟังก์ชันหลักที่ 2: จองคิวและชำระเงิน
+4.4 ฟังก์ชันหลักที่ 2: จองคิวและชำระเงิน
 
-1. ลูกค้าเลือกบริการ ระบบดึงรายการบริการและราคาจากฐานข้อมูลมาแสดง
-2. ลูกค้าเลือกวันที่ ระบบตรวจสอบช่วงเวลาที่ยังว่างแล้วแสดงให้เลือก
-3. ลูกค้ายืนยันการจอง Backend ตรวจสอบซ้ำว่าเวลายังว่าง แล้วบันทึกการจอง สถานะ "รอชำระเงิน"
-4. ลูกค้าเลือกวิธีชำระเงิน ถ้าเลือก QR พร้อมเพย์ ระบบสร้าง QR ตามยอดเงิน ลูกค้าสแกนจ่ายแล้วอัปโหลดสลิป
-5. ระบบบันทึกข้อมูลการชำระเงิน สถานะเปลี่ยนเป็น "รอตรวจสอบ" รอแอดมินยืนยัน
 
 ```mermaid
 sequenceDiagram
     actor C as ลูกค้า
-    participant FE as Frontend
-    participant BE as Backend API
-    participant DB as Database
+    participant FE as Frontend (React)
+    participant BE as Backend API (Express)
+    participant DB as MySQL
+    participant SG as Slip2Go
 
-    C->>FE: เปิดหน้าจองคิว
-    FE->>BE: GET รายการบริการ
-    BE->>DB: ดึงบริการและราคา
-    DB-->>BE: รายการบริการ
-    BE-->>FE: ส่งรายการบริการ
-    FE-->>C: แสดงบริการและราคา
+    C->>FE: เปิดหน้า /booking
+    FE->>BE: GET /api/services
+    BE->>DB: SELECT services, addons ที่เปิดใช้งาน
+    DB-->>BE: บริการหลัก + บริการเสริม
+    BE-->>FE: รายการบริการและราคา
 
-    C->>FE: เลือกบริการ ทะเบียนรถ และวันที่
-    FE->>BE: GET ช่วงเวลาที่ว่าง
-    BE->>DB: ตรวจสอบคิวที่ถูกจองแล้ว
-    DB-->>BE: ข้อมูลคิว
-    BE-->>FE: ช่วงเวลาที่ว่าง
-    FE-->>C: แสดงเวลาให้เลือก
+    C->>FE: เลือกวันที่
+    FE->>BE: GET /api/bookings/availability?date=...
+    BE->>DB: นับคิวที่จองแล้วในแต่ละช่วงเวลา
+    BE-->>FE: ช่วงเวลาที่ยังว่าง
+    FE-->>C: แสดงช่วงเวลาให้เลือก
 
-    C->>FE: เลือกเวลาและยืนยันการจอง
-    FE->>BE: POST สร้างการจอง
-    BE->>DB: ตรวจสอบซ้ำว่าเวลายังว่าง
-    alt เวลายังว่าง
-        BE->>DB: บันทึกการจอง สถานะรอชำระเงิน
-        BE-->>FE: ส่งหมายเลขการจอง
-        FE-->>C: แสดงหน้าชำระเงิน
-    else เวลาเต็มแล้ว
-        BE-->>FE: แจ้งว่าเวลาเต็ม
-        FE-->>C: ให้เลือกเวลาใหม่
+    C->>FE: เลือกเวลา บริการ ข้อมูลรถ แล้วกดยืนยัน
+    FE->>BE: POST /api/bookings
+    BE->>DB: GET_LOCK ช่วงเวลา + BEGIN TRANSACTION
+    BE->>DB: ตรวจซ้ำว่าช่วงเวลายังว่าง
+    alt ช่วงเวลาเต็มแล้ว
+        BE-->>FE: 409 ช่วงเวลาเต็ม
+        FE-->>C: ให้เลือกช่วงเวลาใหม่
+    else ยังว่าง
+        BE->>DB: INSERT bookings (pending, unpaid)
+        BE->>DB: INSERT booking_addons + notifications
+        BE->>DB: COMMIT + RELEASE_LOCK
+        BE-->>FE: bookingCode
+        FE-->>C: ไปหน้า /payment/:bookingCode
     end
 
     alt ชำระด้วย QR พร้อมเพย์
-        FE-->>C: แสดง QR พร้อมเพย์ตามยอดเงิน
-        C->>FE: สแกนจ่ายและอัปโหลดสลิป
-        FE->>BE: ส่งสลิป
-        BE->>DB: บันทึกการชำระ สถานะรอตรวจสอบ
-    else ชำระเงินสดที่ร้าน
+        C->>FE: สแกน QR โอนเงิน แล้วอัปโหลดสลิป
+        FE->>BE: POST /api/bookings/:code/payment (slip)
+        BE->>BE: คำนวณยอด = ราคา − ส่วนลด + VAT 7%
+        BE->>SG: ส่งสลิปตรวจบัญชีผู้รับ ยอดเงิน สลิปซ้ำ
+        SG-->>BE: ผลการตรวจสอบ
+        BE->>DB: INSERT slip_verifications
+        alt สลิปผ่าน
+            BE->>DB: UPDATE payment_status = verified
+            BE-->>FE: ชำระเงินสำเร็จ
+        else สลิปไม่ผ่าน
+            BE->>DB: UPDATE payment_status = rejected
+            BE-->>FE: แจ้งเหตุผล ให้แนบสลิปใหม่
+        end
+    else ชำระด้วยเงินสด
         C->>FE: เลือกชำระเงินสด
-        FE->>BE: ส่งวิธีชำระเงิน
-        BE->>DB: บันทึกวิธีชำระ เงินสด
+        FE->>BE: POST /api/bookings/:code/payment (cash)
+        BE->>DB: UPDATE payment_status = pending_review
+        BE->>DB: INSERT notifications ถึงแอดมิน
+        BE-->>FE: รอเจ้าหน้าที่ยืนยันรับเงิน
     end
-    BE-->>FE: ยืนยันการบันทึก
-    FE-->>C: แสดงรายละเอียดการจอง
+    FE-->>C: แสดงผลการชำระเงิน
 ```
 
-### 4.5 ฟังก์ชันหลักที่ 3: แอดมินอัปเดตสถานะงาน และลูกค้าติดตามสถานะ
-
-1. แอดมินเปิดหน้ารายการจองใน Admin Dashboard ระบบดึงคิวทั้งหมดมาแสดง
-2. แอดมินตรวจสลิปแล้วกดยืนยันการชำระเงิน ระบบอัปเดตสถานะเป็น "ยืนยันแล้ว"
-3. เมื่อเริ่มล้างรถ แอดมินเปลี่ยนสถานะเป็น "กำลังล้าง" และเมื่อเสร็จเปลี่ยนเป็น "เสร็จสิ้น"
-4. เมื่องานเสร็จ ระบบเพิ่มแต้มสะสมให้ลูกค้า และสร้างการแจ้งเตือน
-5. หน้าติดตามสถานะของลูกค้าจะดึงข้อมูลจาก API ใหม่ทุก 15 วินาที จึงเห็นสถานะล่าสุดโดยไม่ต้องรีเฟรชเอง
+4.5 ฟังก์ชันหลักที่ 3: แอดมินจัดการคิว และลูกค้าติดตามสถานะ
 
 ```mermaid
 sequenceDiagram
     actor A as แอดมิน
     participant AD as Admin Dashboard
-    participant BE as Backend API
-    participant DB as Database
+    participant BE as Backend API (Express)
+    participant DB as MySQL
     participant FE as Frontend ลูกค้า
     actor C as ลูกค้า
 
-    A->>AD: เปิดหน้ารายการจอง
-    AD->>BE: GET รายการจองทั้งหมด
-    BE->>DB: ดึงข้อมูลการจอง
-    DB-->>BE: รายการจอง
-    BE-->>AD: ส่งรายการจอง
-    AD-->>A: แสดงรายการพร้อมสถานะ
-
-    A->>AD: ตรวจสลิปและกดยืนยันการชำระเงิน
-    AD->>BE: PATCH ยืนยันการชำระเงิน
-    BE->>DB: อัปเดตสถานะเป็นยืนยันแล้ว
-
-    A->>AD: เปลี่ยนสถานะเป็นกำลังล้าง / เสร็จสิ้น
-    AD->>BE: PATCH อัปเดตสถานะงาน
-    BE->>DB: บันทึกสถานะใหม่
-    opt สถานะเสร็จสิ้น
-        BE->>DB: เพิ่มแต้มสะสมและสร้างแจ้งเตือน
+    loop ทุก 10 วินาที
+        AD->>BE: GET /api/admin/bookings
+        BE->>DB: SELECT bookings + services + addons
+        BE-->>AD: รายการจองทั้งหมด
     end
-    BE-->>AD: อัปเดตสำเร็จ
+    AD-->>A: แสดงรายการจอง สถานะงาน และสถานะการชำระ
+
+    opt รายการชำระด้วยเงินสด
+        A->>AD: กดยืนยันรับเงินสด
+        AD->>BE: PATCH /api/admin/bookings/:id/payment
+        BE->>DB: UPDATE payment_status = verified
+        BE->>DB: INSERT notifications ถึงลูกค้า
+    end
+
+    A->>AD: กดเปลี่ยนสถานะงาน
+    AD->>BE: PATCH /api/admin/bookings/:id/status
+    BE->>DB: ตรวจสอบว่า payment_status = verified
+    alt ยังไม่ได้ชำระเงิน
+        BE-->>AD: 409 กรุณายืนยันการชำระเงินก่อน
+    else ชำระเงินแล้ว
+        BE->>DB: UPDATE bookings.status
+        opt สถานะ = completed (พร้อมรับรถ)
+            BE->>DB: เพิ่ม users.loyalty_points (1 แต้ม / 25 บาท)
+        end
+        BE->>DB: INSERT notifications ถึงลูกค้า
+        BE-->>AD: อัปเดตสถานะแล้ว
+    end
 
     loop ทุก 15 วินาที
-        FE->>BE: GET สถานะคิว
-        BE->>DB: ดึงสถานะล่าสุด
-        DB-->>BE: สถานะคิว
-        BE-->>FE: ส่งสถานะ
-        FE-->>C: แสดงสถานะล่าสุด
+        FE->>BE: GET /api/bookings/me
+        BE->>DB: SELECT bookings ของลูกค้า
+        BE-->>FE: สถานะล่าสุด
+        FE-->>C: แสดงสถานะ และแจ้งเตือนเมื่อสถานะเปลี่ยน
     end
 ```
 
-### 4.6 สถานะของการจอง (State Diagram)
+4.6 สถานะของการจอง (State Diagram)
+
+
 ```mermaid
 stateDiagram-v2
-    state "รอชำระเงิน" as Pending
-    state "รอตรวจสอบการชำระ" as Verifying
-    state "ยืนยันแล้ว" as Confirmed
-    state "กำลังล้าง" as Washing
-    state "เสร็จสิ้น" as Done
-    state "ยกเลิก" as Cancelled
+    state "รอยืนยันการจอง<br/>pending" as pending
+    state "รับรถเข้าคิวแล้ว<br/>confirmed" as confirmed
+    state "กำลังให้บริการ<br/>in_service" as in_service
+    state "พร้อมรับรถแล้ว<br/>completed" as completed
+    state "ยกเลิกการจอง<br/>cancelled" as cancelled
 
-    [*] --> Pending : ลูกค้าจองคิว
-    Pending --> Verifying : อัปโหลดสลิป
-    Pending --> Confirmed : เลือกชำระเงินสด
-    Verifying --> Confirmed : แอดมินยืนยัน
-    Pending --> Cancelled : ลูกค้ายกเลิก
-    Confirmed --> Confirmed : ลูกค้าเลื่อนคิว
-    Confirmed --> Cancelled : ลูกค้ายกเลิก
-    Confirmed --> Washing : เริ่มล้างรถ
-    Washing --> Done : ล้างเสร็จ ได้รับแต้มสะสม
-    Done --> [*]
-    Cancelled --> [*]
+    [*] --> pending : ลูกค้าจองคิว
+    pending --> confirmed : แอดมินรับรถเข้าคิว (ต้องชำระเงินแล้ว)
+    confirmed --> in_service : แอดมินเริ่มให้บริการ
+    in_service --> completed : แอดมินกดพร้อมรับรถ + ให้แต้มสะสม
+    pending --> cancelled : ลูกค้า / แอดมินยกเลิก
+    confirmed --> cancelled : ลูกค้า / แอดมินยกเลิก
+    completed --> [*]
+    cancelled --> [*]
 ```
 
-### 4.7 ฟังก์ชันเสริม: เลื่อน / ยกเลิกคิว
+**สถานะการชำระเงิน**
+
+```mermaid
+stateDiagram-v2
+    state "ยังไม่ชำระ<br/>unpaid" as unpaid
+    state "รอตรวจสอบ<br/>pending_review" as pending_review
+    state "ชำระแล้ว<br/>verified" as verified
+    state "สลิปไม่ผ่าน<br/>rejected" as rejected
+
+    [*] --> unpaid : สร้างการจอง
+    unpaid --> verified : สลิปพร้อมเพย์ผ่าน Slip2Go
+    unpaid --> rejected : สลิปไม่ผ่าน Slip2Go
+    rejected --> verified : แนบสลิปใหม่และผ่าน
+    unpaid --> pending_review : เลือกชำระเงินสด
+    rejected --> pending_review : เปลี่ยนเป็นเงินสด
+    pending_review --> verified : แอดมินยืนยันรับเงิน
+    verified --> [*]
+```
+
+4.7 ฟังก์ชันเสริม: เลื่อน / ยกเลิกคิว
+
+
 ```mermaid
 flowchart TD
-    A(["ลูกค้าเปิดหน้ารายการของฉัน"]) --> B["ระบบดึงรายการจองจาก Database"]
-    B --> C["เลือกคิวที่ต้องการ"]
-    C --> D{"สถานะยังไม่เริ่มล้างหรือไม่"}
-    D -->|"ไม่ใช่"| E["แจ้งว่าไม่สามารถแก้ไขได้"]
-    D -->|"ใช่"| F{"ต้องการเลื่อนหรือยกเลิก"}
-    F -->|"เลื่อน"| G["เลือกวันและเวลาใหม่"]
-    G --> H{"เวลาใหม่ว่างหรือไม่"}
-    H -->|"ไม่ว่าง"| G
-    H -->|"ว่าง"| I["อัปเดตวันเวลาใน Database"]
-    F -->|"ยกเลิก"| J["อัปเดตสถานะเป็นยกเลิก<br/>และคืนช่วงเวลาให้ว่าง"]
-    I --> K["แจ้งผลให้ลูกค้า"]
-    J --> K
-    E --> Z(["สิ้นสุด"])
-    K --> Z
+    A(["ลูกค้าเปิดหน้า /status"]) --> B["GET /api/bookings/me<br/>ดึงรายการจองของฉัน"]
+    B --> C["เลือกรายการจอง"]
+    C --> D{"สถานะเป็น pending หรือ confirmed<br/>และยังไม่ถึงเวลานัด"}
+    D -->|"ไม่ใช่"| E["แจ้งให้ติดต่อร้านค้า"]
+    D -->|"ใช่"| F{"ต้องการทำอะไร"}
+
+    F -->|"เลื่อนคิว"| G["เลือกวันใหม่<br/>ดูช่วงเวลาว่างจาก /availability"]
+    G --> H["PATCH /api/bookings/:code/reschedule"]
+    H --> I{"ช่วงเวลาใหม่ยังว่างหรือไม่"}
+    I -->|"เต็ม"| G
+    I -->|"ว่าง"| J["UPDATE วันและเวลาใน bookings"]
+
+    F -->|"ยกเลิกคิว"| K["PATCH /api/bookings/:code/cancel"]
+    K --> L["UPDATE status = cancelled<br/>ช่วงเวลากลับมาว่าง"]
+    L --> M{"ชำระเงินแล้วหรือไม่"}
+    M -->|"ใช่"| N["แจ้งเตือนแอดมินเรื่องคืนเงิน"]
+    M -->|"ไม่"| O["บันทึกการแจ้งเตือนให้ลูกค้า"]
+    N --> O
+    J --> O
+    O --> Z(["สิ้นสุด"])
+    E --> Z
 ```
