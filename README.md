@@ -831,61 +831,46 @@ erDiagram
 ### 4.1 ภาพรวมการทำงานของทั้งระบบ (Use Case Diagram)
 
 ```mermaid
-flowchart LR
-    Customer(("👤<br/>ลูกค้า"))
-    Admin(("🛠️<br/>แอดมิน"))
-    Google(("🌐<br/>Google"))
-    Slip2Go(("🧾<br/>Slip2Go"))
+%%{init: {"flowchart": {"curve": "stepAfter"}}}%%
+flowchart TD
+    Start([เริ่มต้น]) --> Login{"เข้าสู่ระบบแล้ว?"}
+    Login -->|ไม่ใช่| Auth["สมัครสมาชิก / เข้าสู่ระบบ<br>อีเมล หรือ Google"]
+    Auth --> Book
+    Login -->|ใช่| Book["เมนูจองคิว"]
 
-    subgraph SYS["ระบบจองคิวล้างรถออนไลน์ CarWash Queue"]
-        UC1(["สมัครสมาชิก"])
-        UC2(["เข้าสู่ระบบ"])
-        UC3(["ดูบริการและราคา"])
-        UC4(["จองคิวล้างรถ"])
-        UC5(["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด"])
-        UC6(["ติดตามสถานะคิว"])
-        UC7(["เลื่อน / ยกเลิกคิว"])
-        UC8(["ดูการแจ้งเตือน"])
-        UC9(["จัดการโปรไฟล์ / รถของฉัน<br/>ดูแต้มสะสม"])
-        UC10(["ติดต่อร้าน"])
-        UC11(["ยืนยันรับเงินสด"])
-        UC12(["อัปเดตสถานะงาน"])
-        UC13(["จัดการข้อมูลลูกค้า"])
-        UC14(["จัดการบริการและราคา"])
-        UC15(["ดูรายงานรายรับ"])
-        UC16(["จัดการข้อความ"])
-    end
+    Book --> PickDate["เลือกวันที่เข้ารับบริการ"]
+    PickDate --> Sunday{"เป็นวันอาทิตย์?"}
+    Sunday -->|ใช่| Closed["แจ้งว่าร้านปิด<br>ให้เลือกวันจันทร์–เสาร์"]
+    Closed --> PickDate
+    Sunday -->|ไม่ใช่| PickSlot["เลือกช่วงเวลา<br>ระบบแสดงคิวว่าง"]
+    PickSlot --> Free{"ช่วงเวลายังว่าง?"}
+    Free -->|ไม่ว่าง| PickSlot
+    Free -->|ว่าง| Service["เลือกบริการหลัก 1 แบบ<br>และบริการเสริม"]
+    Service --> Info["กรอกข้อมูลลูกค้าและรถ"]
+    Info --> Confirm["ยืนยันการจอง<br>สถานะ: รอยืนยันการจอง"]
 
-    Customer --- UC1
-    Customer --- UC2
-    Customer --- UC3
-    Customer --- UC4
-    Customer --- UC5
-    Customer --- UC6
-    Customer --- UC7
-    Customer --- UC8
-    Customer --- UC9
-    Customer --- UC10
+    Confirm --> Pay["หน้าชำระเงิน<br>ยอดบริการ + VAT 7%"]
+    Pay --> Method{"ช่องทางชำระเงิน"}
 
-    UC2 --- Admin
-    UC11 --- Admin
-    UC12 --- Admin
-    UC13 --- Admin
-    UC14 --- Admin
-    UC15 --- Admin
-    UC16 --- Admin
+    Method -->|พร้อมเพย์ / QR| Scan["สแกน QR และโอนเงิน"]
+    Scan --> Upload["แนบสลิป"]
+    Upload --> Check{"ระบบตรวจสลิป<br>ผ่าน?"}
+    Check -->|ไม่ผ่าน| Fail["สถานะ: ไม่ผ่านการตรวจสอบ"]
+    Fail --> Upload
+    Check -->|ผ่าน| Paid["ชำระเงิน: ตรวจสอบแล้ว"]
 
-    UC2 -.- Google
-    UC5 -.- Slip2Go
+    Method -->|เงินสด| Cash["จ่ายเงินสดที่ร้าน"]
+    Cash --> Notify["กดแจ้งชำระเงินสด<br>สถานะ: รอตรวจสอบ"]
+    Notify --> AdminCash["แอดมินกดยืนยันรับเงินสด"]
+    AdminCash --> Paid
 
-    classDef actor fill:#fff,stroke:#334155,color:#000
-    classDef cus fill:#dbeafe,stroke:#2563eb,color:#000
-    classDef adm fill:#ffedd5,stroke:#ea580c,color:#000
-    classDef both fill:#dcfce7,stroke:#16a34a,color:#000
-    class Customer,Admin,Google,Slip2Go actor
-    class UC1,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10 cus
-    class UC11,UC12,UC13,UC14,UC15,UC16 adm
-    class UC2 both
+    Paid --> Queue["แอดมินกด รับรถเข้าคิว<br>สถานะ: รับรถเข้าคิวแล้ว"]
+    Queue --> Serve["แอดมินกด เริ่มให้บริการ<br>สถานะ: กำลังให้บริการ"]
+    Serve --> Ready["แอดมินกด พร้อมรับรถ<br>สถานะ: พร้อมรับรถแล้ว"]
+    Ready --> Points["ลูกค้าได้รับแจ้งเตือน<br>และแต้มสะสม 1 แต้ม / 25 บาท"]
+    Points --> End([สิ้นสุด])
+
+    Confirm -.-> Cancel["เลื่อนวันเวลา / ยกเลิกการจอง<br>ทำได้ก่อนถึงพร้อมรับรถแล้ว"]
 ```
 ### 4.2 กระบวนการของฟังก์ชันหลัก
 
