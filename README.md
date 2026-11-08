@@ -812,7 +812,7 @@ erDiagram
 
 ### 4) กระบวนการทำงานของระบบ (System Workflow)
 
-### 4.1 ภาพรวมการทำงานของทั้งระบบ (Use Case Diagram)
+### 4.1 ภาพรวมการทำงานของทั้งระบบ (Flowchart)
 
 ```mermaid
 %%{init: {"flowchart": {"curve": "stepAfter"}}}%%
@@ -930,7 +930,7 @@ flowchart TD
     linkStyle default interpolate stepAfter
 ```
 
-### ฟังก์ชันที่ 3: แอดมินอัปเดตสถานะงาน และลูกค้าติดตามสถานะคิว
+### 3. ฟังก์ชันแอดมินอัปเดตสถานะงาน และลูกค้าติดตามสถานะคิว
 
 ### ฟังก์ชันแอดมินอัปเดตสถานะงาน
 ```mermaid
