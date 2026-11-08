@@ -685,6 +685,79 @@ erDiagram
 | **ป้องกันจองซ้ำ** | unique index บน `(service_date, time_slot)` ที่สถานะไม่ใช่ `cancelled` และตรวจซ้ำใน transaction ตอนสร้างหรือเลื่อนคิว |
 | **ป้องกันสลิปซ้ำ** | ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true` |
 | **Index ที่ควรมี** | `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)` |
+3) เทคโนโลยีที่ใช้ในการพัฒนา (Tech Stack)
+
+### Frontend (`client`)
+
+| เทคโนโลยี | เวอร์ชัน | หน้าที่ |
+|---|---|---|
+| React | 18.3.1 | ไลบรารีสร้างหน้าเว็บแบบ Component |
+| React DOM | 18.3.1 | แสดงผล React บนเบราว์เซอร์ |
+| React Router DOM | 6.30.6 | จัดการเส้นทางหน้าเว็บ (`/booking`, `/payment/:code`, `/admin` ฯลฯ) |
+| Vite | 6.4.3 | Dev Server และ Build Tool |
+| @vitejs/plugin-react | 4.7.0 | Plugin ให้ Vite รองรับ React (JSX) |
+| Tailwind CSS | 3.4.19 | จัดสไตล์หน้าเว็บแบบ Utility-first |
+| PostCSS | 8.5.26 | ประมวลผล CSS ร่วมกับ Tailwind |
+| Autoprefixer | 10.5.4 | เติม Vendor Prefix ให้ CSS อัตโนมัติ |
+| Google Identity Services | – (โหลดจาก CDN) | ปุ่มเข้าสู่ระบบด้วย Google |
+| Google Fonts (Prompt) | – | ฟอนต์ภาษาไทยของเว็บไซต์ |
+
+### ⚙️ Backend (`server`)
+
+| เทคโนโลยี | เวอร์ชัน | หน้าที่ |
+|---|---|---|
+| Node.js | 20 (`node:20-alpine`) | Runtime สำหรับรัน JavaScript ฝั่งเซิร์ฟเวอร์ |
+| Express | 4.22.2 | Web Framework สร้าง REST API (`/api/*`) |
+| mysql2 | 3.24.2 | เชื่อมต่อฐานข้อมูล MySQL (Connection Pool + Transaction) |
+| jsonwebtoken | 9.0.3 | สร้างและตรวจสอบ JWT สำหรับยืนยันตัวตน |
+| bcryptjs | 2.4.3 | เข้ารหัสรหัสผ่านก่อนบันทึกลงฐานข้อมูล |
+| google-auth-library | 10.9.1 | ตรวจสอบ ID Token ของ Google Sign-In |
+| multer | 1.4.5-lts.2 | รับไฟล์อัปโหลด (สลิปโอนเงิน, ไฟล์แนบติดต่อร้าน) |
+| cookie-parser | 1.4.7 | อ่าน Cookie ที่เก็บ JWT |
+| cors | 2.8.6 | อนุญาตให้ Frontend เรียก API ข้ามโดเมน |
+| dotenv | 16.6.1 | โหลดค่าตั้งค่าจากไฟล์ `.env` |
+
+### Database
+
+| เทคโนโลยี | เวอร์ชัน | หน้าที่ |
+|---|---|---|
+| MySQL | 8.4 (`mysql:8.4`) | ฐานข้อมูลหลัก (`users`, `services`, `addons`, `bookings`, `booking_addons`, `slip_verifications`, `customer_cars`, `notifications`, `contacts`) |
+| phpMyAdmin | 5.2 (`phpmyadmin:5.2-apache`) | จัดการฐานข้อมูลผ่านหน้าเว็บ (ใช้ตอนพัฒนา) |
+
+### บริการภายนอก (External Services)
+
+| บริการ | หน้าที่ |
+|---|---|
+| Google Sign-In (OAuth 2.0) | เข้าสู่ระบบด้วยบัญชี Google |
+| Slip2Go API | ตรวจสอบสลิปโอนเงินพร้อมเพย์อัตโนมัติ (บัญชีผู้รับ, ยอดเงิน, สลิปซ้ำ) |
+| promptpay.io | สร้างรูป QR Code พร้อมเพย์ตามยอดที่ต้องชำระ |
+
+### การ Deploy
+
+| รายการ | เทคโนโลยี / เวอร์ชัน | รายละเอียด |
+|---|---|---|
+| VPS | ⚠️ ระบุผู้ให้บริการ | เซิร์ฟเวอร์ที่รันระบบ เข้าถึงผ่าน SSH |
+| OS | ⚠️ ระบุ เช่น Ubuntu 24.04 LTS | ระบบปฏิบัติการของ VPS |
+| Domain | `carwash.carcareku.tech` | Subdomain ของระบบ |
+| Web Server (บน VPS) | Nginx | Reverse Proxy รับคำขอจากโดเมน ส่งต่อไปที่ Container `127.0.0.1:16200` |
+| Web Server (ใน Container) | Nginx (`nginx:alpine`) | เสิร์ฟไฟล์ React ที่ Build แล้ว และส่งต่อ `/api/` ไปที่ Backend |
+| Docker | Docker Engine + Docker Compose v2 | รันระบบ 3 Container: `client`, `api`, `db` |
+| Container Registry | GitHub Container Registry (ghcr.io) | เก็บ Docker Image ของ `api` และ `client` |
+| CI/CD | GitHub Actions | เมื่อ push ขึ้น `main` จะ Build Image → Push ขึ้น GHCR → SSH เข้า VPS → รัน Migration → `docker compose pull && up -d` → เช็ก `/api/health` |
+| Actions ที่ใช้ | `actions/checkout@v4`, `docker/setup-buildx-action@v3`, `docker/login-action@v3`, `docker/build-push-action@v6` | ขั้นตอนใน `.github/workflows/deploy.yml` |
+| Vercel (ทางเลือก) | `client/vercel.json` | ตั้งค่าไว้สำหรับ Deploy เฉพาะ Frontend |
+
+### เครื่องมือพัฒนา (Development Tools)
+
+| เครื่องมือ | เวอร์ชัน | หน้าที่ |
+|---|---|---|
+| Git + GitHub | – | จัดการเวอร์ชันโค้ดและทำงานร่วมกันในทีม |
+| npm | มากับ Node.js 20 | ติดตั้งและจัดการแพ็กเกจ |
+| Docker Compose (Dev) | `docker-compose.yml` | รัน `client` + `api` + `db` + `phpMyAdmin` บนเครื่องตัวเองด้วยคำสั่งเดียว |
+| Vite Dev Server | 6.4.3 | รัน Frontend ตอนพัฒนา (`npm run dev`) |
+| Node.js `--watch` | 20 | รีสตาร์ต Backend อัตโนมัติเมื่อแก้โค้ด (`npm run dev`) |
+| phpMyAdmin | 5.2 | ดูและแก้ข้อมูลในฐานข้อมูลตอนพัฒนา |
+| Code Editor | ⚠️ ระบุ เช่น Visual Studio Code | เขียนโค้ด |
 
 4) กระบวนการทำงานของระบบ (System Workflow)
 
