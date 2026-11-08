@@ -1,4 +1,5 @@
 2) โครงสร้างของระบบ (System Architecture)
+
 2.1 แผนภาพสถาปัตยกรรม แสดงส่วนประกอบและการเชื่อมต่อ (Client → Frontend → Backend/API → Database และบริการภายนอก)
 ```mermaid
 flowchart TB
