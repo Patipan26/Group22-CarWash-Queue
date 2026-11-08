@@ -747,10 +747,9 @@ erDiagram
 | **ป้องกันสลิปซ้ำ** | ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true` |
 | **Index ที่ควรมี** | `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)` |
 
+---
 
-
-
-3) เทคโนโลยีที่ใช้ในการพัฒนา (Tech Stack)
+### 3) เทคโนโลยีที่ใช้ในการพัฒนา (Tech Stack)
 
 ### Frontend (`client`)
 
@@ -767,7 +766,7 @@ erDiagram
 | Google Identity Services | – (โหลดจาก CDN) | ปุ่มเข้าสู่ระบบด้วย Google |
 | Google Fonts (Prompt) | – | ฟอนต์ภาษาไทยของเว็บไซต์ |
 
-### ⚙️ Backend (`server`)
+###  Backend (`server`)
 
 | เทคโนโลยี | เวอร์ชัน | หน้าที่ |
 |---|---|---|
@@ -824,12 +823,12 @@ erDiagram
 | phpMyAdmin | 5.2 | ดูและแก้ข้อมูลในฐานข้อมูลตอนพัฒนา |
 | Code Editor | ⚠️ ระบุ เช่น Visual Studio Code | เขียนโค้ด |
 
+---
 
 
+### 4) กระบวนการทำงานของระบบ (System Workflow)
 
-4) กระบวนการทำงานของระบบ (System Workflow)
-
-4.1 ภาพรวมการทำงานของทั้งระบบ (Use Case Diagram)
+### 4.1 ภาพรวมการทำงานของทั้งระบบ (Use Case Diagram)
 
 ```mermaid
 flowchart LR
@@ -888,7 +887,7 @@ flowchart LR
     class UC11,UC12,UC13,UC14,UC15,UC16 adm
     class UC2 both
 ```
-4.2 กระบวนการของฟังก์ชันหลัก
+### 4.2 กระบวนการของฟังก์ชันหลัก
 
 ```mermaid
 sequenceDiagram
