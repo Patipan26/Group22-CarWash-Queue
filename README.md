@@ -81,14 +81,14 @@
 ```mermaid
 flowchart TB
     %% ===== Client =====
-    subgraph CLIENT["👥 Client Layer"]
+    subgraph CLIENT[" Client Layer"]
         direction LR
         C1["ลูกค้า<br/>Web / Mobile Browser"]
         C2["แอดมิน<br/>Web Browser"]
     end
 
     %% ===== Frontend =====
-    subgraph FE["💻 Frontend (Web Application)"]
+    subgraph FE[" Frontend (Web Application)"]
         direction TB
         subgraph FE_C["หน้าสำหรับลูกค้า"]
             F1["หน้าแรก / บริการและราคา"]
@@ -109,7 +109,7 @@ flowchart TB
     end
 
     %% ===== Backend =====
-    subgraph BE["🖥️ Backend / REST API"]
+    subgraph BE[" Backend / REST API"]
         direction TB
         GW["API Gateway / Router<br/>HTTPS + Role-based Access<br/>customer / admin"]
         AUTH["Auth Service<br/>สมัคร / เข้าสู่ระบบ / เปลี่ยนรหัสผ่าน"]
@@ -123,13 +123,13 @@ flowchart TB
     end
 
     %% ===== Data =====
-    subgraph DATA["🗄️ Data Layer"]
+    subgraph DATA[" Data Layer"]
         DB[("Database<br/>users, vehicles, bookings,<br/>services, booking_addons, payments,<br/>slip_checks, point_transactions,<br/>notifications, contact_messages")]
         FS[("File Storage<br/>รูปสลิป / ไฟล์แนบ<br/>JPG PNG WEBP PDF ไม่เกิน 5 MB")]
     end
 
     %% ===== External =====
-    subgraph EXT["🌐 External Services"]
+    subgraph EXT[" External Services"]
         GOOGLE["Google OAuth<br/>ดำเนินการต่อโดยใช้ Google"]
         SLIP["Slip Verification API<br/>ตรวจ QR บนสลิป ยอดเงิน<br/>บัญชีผู้รับ และสลิปซ้ำ"]
         BANK["แอปธนาคาร<br/>PromptPay โอนเงิน"]
@@ -190,7 +190,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    ROOT["📦 car-wash-project<br/>ระบบจองคิวล้างรถออนไลน์"]:::root
+    ROOT["car-wash-project<br/>ระบบจองคิวล้างรถออนไลน์"]:::root
 
     %% ================= ROOT FILES =================
     ROOT --> R1[".gitignore<br/>ไฟล์ที่ไม่นำขึ้น Git"]:::file
