@@ -200,6 +200,113 @@ flowchart LR
     classDef folder fill:#fff4d6,stroke:#e0a800,color:#333,font-weight:bold
     classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333
 ```
+```mermaid
+flowchart TB
+    user(["👤 ลูกค้า"]):::actor
+    admin(["🛠️ ผู้ดูแลระบบ"]):::actor
+
+    subgraph CLIENT["💻 client — Frontend: React + Vite + Tailwind"]
+        direction TB
+        pages["📁 pages<br/>หน้าเว็บ: จองคิว, ชำระเงิน, ติดตามคิว,<br/>โปรไฟล์, แจ้งเตือน, Admin"]
+        comps["📁 components<br/>Layout, ปุ่ม Google, RouteGuards"]
+        authjsx["auth.jsx<br/>เก็บสถานะล็อกอิน"]
+        apijs["api.js<br/>เรียก Backend API"]
+        pages --> comps
+        pages --> authjsx
+        pages --> apijs
+    end
+
+    subgraph SERVER["🖥️ server — Backend: Node.js + Express"]
+        direction TB
+        srv["server.js<br/>จุดเริ่มต้น API"]
+        mw["📁 middleware<br/>auth.js ตรวจสิทธิ์<br/>upload.js / privateUpload.js รับไฟล์"]
+        routes["📁 routes<br/>auth, services, bookings, profile,<br/>notifications, contacts, admin"]
+        dbjs["db.js<br/>เชื่อมต่อฐานข้อมูล"]
+        uploads[("📁 uploads<br/>สลิป / ไฟล์แนบ")]
+        srv --> mw --> routes
+        routes --> dbjs
+        routes --> uploads
+    end
+
+    subgraph DATABASE["🗄️ database"]
+        direction TB
+        schema["schema.sql<br/>สร้างตาราง"]
+        seed["seed.sql<br/>ข้อมูลตั้งต้น"]
+        mig["📁 migrations 002–011<br/>อัปเดตโครงสร้างตามเวอร์ชัน"]
+        dbstore[("ฐานข้อมูล")]
+        schema --> dbstore
+        seed --> dbstore
+        mig --> dbstore
+    end
+
+    subgraph DEPLOY["🚀 การ deploy"]
+        direction TB
+        gha["⚙️ .github/workflows/deploy.yml<br/>CI/CD อัตโนมัติ"]
+        compose["🐳 docker-compose<br/>dev / production"]
+        nginx["🌐 Nginx<br/>reverse proxy"]
+        gha --> compose
+    end
+
+    google["🔑 Google Sign-In"]:::ext
+    slip["🧾 Slip2Go<br/>ตรวจสลิปโอนเงิน"]:::ext
+
+    user --> nginx
+    admin --> nginx
+    nginx --> CLIENT
+    apijs -- "HTTP / JSON" --> nginx
+    nginx --> srv
+    dbjs --> dbstore
+    authjsx -.-> google
+    routes -.-> google
+    routes -.-> slip
+    compose -.-> CLIENT
+    compose -.-> SERVER
+    compose -.-> DATABASE
+
+    classDef actor fill:#d4f5dd,stroke:#2e9e4f,color:#222
+    classDef ext fill:#ffe3e3,stroke:#d9534f,color:#222
+```
+
+## 🔄 ขั้นตอนการจองคิวล้างรถ
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 👤 ลูกค้า
+    participant C as 💻 Client
+    participant S as 🖥️ Server
+    participant D as 🗄️ Database
+    participant P as 🧾 Slip2Go
+    actor A as 🛠️ Admin
+
+    U->>C: เข้าสู่ระบบ (อีเมล หรือ Google)
+    C->>S: POST /auth
+    S->>D: ตรวจสอบ / สร้างผู้ใช้
+    S-->>C: ส่ง token กลับ
+
+    U->>C: เลือกบริการ วัน และเวลา
+    C->>S: POST /bookings
+    S->>D: ตรวจช่วงเวลาว่าง แล้วบันทึกการจอง
+    S-->>C: การจองสำเร็จ
+
+    alt โอนเงิน
+        U->>C: แนบสลิปโอนเงิน
+        C->>S: อัปโหลดสลิป (privateUpload)
+        S->>P: ส่งสลิปไปตรวจสอบ
+        P-->>S: ผลการตรวจสลิป
+        S->>D: บันทึกการชำระเงินและประวัติการตรวจ
+    else เงินสด
+        U->>C: เลือกชำระเงินสด
+        C->>S: บันทึกวิธีชำระเงินสด
+        S->>D: บันทึกสถานะรอชำระที่ร้าน
+    end
+
+    A->>S: อัปเดตสถานะ (กำลังล้าง / เสร็จแล้ว)
+    S->>D: บันทึกสถานะ, การแจ้งเตือน และแต้มสะสม
+    U->>C: เปิดหน้าติดตามคิว / แจ้งเตือน
+    C->>S: GET /bookings, /notifications
+    S-->>C: สถานะล่าสุด
+```
 2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
 ```mermaid
 erDiagram
