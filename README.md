@@ -1,4 +1,5 @@
 2) โครงสร้างของระบบ (System Architecture)
+2.1 แผนภาพสถาปัตยกรรม แสดงส่วนประกอบและการเชื่อมต่อ (Client → Frontend → Backend/API → Database และบริการภายนอก)
 ```mermaid
 flowchart TB
     %% ===== Client =====
@@ -105,3 +106,286 @@ flowchart TB
     class DB,FS data
     class GOOGLE,SLIP,BANK ext
 ```
+2.3โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
+```mermaid
+erDiagram
+    USERS ||--o{ VEHICLES : "เป็นเจ้าของ"
+    USERS ||--o{ BOOKINGS : "จอง"
+    USERS ||--o{ NOTIFICATIONS : "ได้รับ"
+    USERS ||--o{ CONTACT_MESSAGES : "ส่ง"
+    USERS ||--o{ POINT_TRANSACTIONS : "สะสม"
+    VEHICLES ||--o{ BOOKINGS : "ใช้ในการจอง"
+    SERVICES ||--o{ BOOKINGS : "เป็นบริการหลัก"
+    SERVICES ||--o{ BOOKING_ADDONS : "เป็นบริการเสริม"
+    BOOKINGS ||--o{ BOOKING_ADDONS : "มี"
+    BOOKINGS ||--o{ PAYMENTS : "ชำระด้วย"
+    BOOKINGS ||--o{ NOTIFICATIONS : "เกี่ยวข้อง"
+    BOOKINGS ||--o{ POINT_TRANSACTIONS : "ให้แต้ม"
+    BOOKINGS ||--o{ BOOKING_STATUS_LOGS : "บันทึกการเปลี่ยนสถานะ"
+    PAYMENTS ||--o{ SLIP_CHECKS : "ถูกตรวจสลิป"
+    USERS ||--o{ PAYMENTS : "แอดมินยืนยัน"
+    USERS ||--o{ BOOKING_STATUS_LOGS : "ผู้เปลี่ยนสถานะ"
+
+    USERS {
+        bigint id PK
+        varchar full_name
+        varchar email UK
+        varchar phone
+        varchar password_hash "null ได้ถ้าสมัครด้วย Google"
+        varchar google_id UK "null ได้"
+        varchar role "customer หรือ admin"
+        int points_balance "แต้มสะสมคงเหลือ"
+        datetime created_at "วันที่เป็นสมาชิก"
+        datetime updated_at
+    }
+
+    VEHICLES {
+        bigint id PK
+        bigint user_id FK
+        varchar car_model "รุ่นรถ"
+        varchar license_plate "ทะเบียน"
+        datetime created_at
+    }
+
+    SERVICES {
+        bigint id PK
+        varchar type "main หรือ addon"
+        varchar name
+        text description
+        decimal price "ก่อน VAT"
+        int duration_minutes "ใช้กับบริการหลัก"
+        boolean is_active "เปิดให้ลูกค้าเลือกจอง"
+        datetime created_at
+        datetime updated_at
+    }
+
+    BOOKINGS {
+        bigint id PK
+        varchar booking_code UK "เช่น CWMVVKVGN0631"
+        bigint user_id FK
+        bigint vehicle_id FK "null ได้"
+        bigint main_service_id FK
+        varchar customer_name "snapshot ตอนจอง"
+        varchar customer_phone
+        varchar car_model
+        varchar license_plate
+        date service_date "จันทร์ถึงเสาร์"
+        varchar time_slot "เช่น 09:00-10:00"
+        decimal main_price "ราคา ณ วันจอง"
+        decimal addons_total
+        decimal subtotal "ก่อน VAT"
+        decimal vat_amount "7 เปอร์เซ็นต์"
+        decimal total_amount "ยอดชำระสุทธิ"
+        varchar status "ดูหัวข้อ Enum"
+        varchar cancelled_by "customer หรือ admin"
+        datetime cancelled_at
+        int points_earned
+        datetime created_at
+        datetime updated_at
+    }
+
+    BOOKING_ADDONS {
+        bigint id PK
+        bigint booking_id FK
+        bigint service_id FK
+        varchar name "snapshot"
+        decimal price "ราคา ณ วันจอง"
+    }
+
+    PAYMENTS {
+        bigint id PK
+        bigint booking_id FK
+        varchar method "promptpay หรือ cash"
+        varchar status "ดูหัวข้อ Enum"
+        decimal amount
+        varchar slip_url "ที่เก็บรูปสลิป"
+        datetime cash_reported_at "ลูกค้ากดแจ้งชำระเงินสด"
+        bigint confirmed_by FK "แอดมินที่ยืนยันรับเงินสด"
+        datetime verified_at "ใช้นับรายรับตามวันนี้"
+        datetime created_at
+    }
+
+    SLIP_CHECKS {
+        bigint id PK
+        bigint payment_id FK
+        boolean is_passed
+        varchar reason "เช่น Slip is Duplicated"
+        decimal amount
+        varchar reference_id
+        varchar transaction_ref UK "กันสลิปซ้ำ"
+        json raw_response
+        datetime checked_at
+    }
+
+    POINT_TRANSACTIONS {
+        bigint id PK
+        bigint user_id FK
+        bigint booking_id FK
+        int points "1 แต้มต่อ 25 บาท"
+        datetime created_at
+    }
+
+    NOTIFICATIONS {
+        bigint id PK
+        bigint user_id FK "ผู้รับ ลูกค้าหรือแอดมิน"
+        bigint booking_id FK "null ได้"
+        varchar title
+        text message
+        boolean is_read
+        datetime created_at
+    }
+
+    CONTACT_MESSAGES {
+        bigint id PK
+        bigint user_id FK "null ได้"
+        varchar sender_name
+        varchar contact "เบอร์โทรหรืออีเมล"
+        varchar subject "หัวข้อ"
+        text message
+        varchar attachment_url "รูปหรือ PDF ไม่เกิน 5 MB"
+        varchar status "unread, read, archived"
+        datetime created_at
+    }
+
+    BOOKING_STATUS_LOGS {
+        bigint id PK
+        bigint booking_id FK
+        varchar from_status
+        varchar to_status
+        bigint changed_by FK
+        datetime changed_at
+    }
+```
+
+## 2. คำอธิบายแต่ละ Table
+
+### 2.1 `users` – ผู้ใช้งาน
+เก็บบัญชีทั้งลูกค้าและแอดมินไว้ table เดียว แยกด้วย `role`
+
+| Column | คำอธิบาย |
+|---|---|
+| `id` | รหัสผู้ใช้ (PK) |
+| `full_name`, `email`, `phone` | ข้อมูลส่วนตัว แสดงในหน้าโปรไฟล์และหน้าข้อมูลลูกค้าของแอดมิน |
+| `password_hash` | รหัสผ่านที่เข้ารหัสแล้ว (ว่างได้ถ้าเข้าสู่ระบบด้วย Google อย่างเดียว) |
+| `google_id` | รหัสบัญชี Google สำหรับ "ดำเนินการต่อโดยใช้ Google" |
+| `role` | `customer` หรือ `admin` ใช้กำหนดสิทธิ์เข้า `/admin` |
+| `points_balance` | แต้มสะสมคงเหลือ (เก็บซ้ำเพื่อเรียกดูเร็ว ค่าจริงตรวจสอบย้อนหลังได้จาก `point_transactions`) |
+| `created_at` | วันที่เป็นสมาชิก |
+
+### 2.2 `vehicles` – ประวัติรถ
+รถที่ลูกค้าเคยจองหรือบันทึกไว้ (ปุ่ม + เพิ่มรถ ในหน้าโปรไฟล์) ลูกค้า 1 คนมีได้หลายคัน
+
+| Column | คำอธิบาย |
+|---|---|
+| `user_id` | เจ้าของรถ (FK → users) |
+| `car_model` | รุ่นรถ เช่น adv150, wave125 |
+| `license_plate` | ทะเบียนรถ ใช้ค้นหาในหน้าแอดมิน |
+
+### 2.3 `services` – บริการและราคา
+เก็บทั้งบริการหลัก (Standard / Premium / Full Detailing) และบริการเสริม (เคลือบแก้ว, ขัดโคมไฟ ฯลฯ) แยกด้วย `type`
+
+| Column | คำอธิบาย |
+|---|---|
+| `type` | `main` = บริการหลัก, `addon` = บริการเสริม |
+| `price` | ราคาก่อน VAT 7% |
+| `duration_minutes` | ระยะเวลาให้บริการ (ใช้กับบริการหลัก) |
+| `is_active` | เปิดให้ลูกค้าเลือกจองหรือไม่ ปุ่ม "ปิดบริการ" จะตั้งเป็น false แทนการลบ เพื่อให้ประวัติเดิมยังอ้างอิงได้ |
+
+### 2.4 `bookings` – การจอง (ตารางหลัก)
+1 แถวต่อ 1 การจอง
+
+| Column | คำอธิบาย |
+|---|---|
+| `booking_code` | รหัสจองที่แสดงให้ลูกค้า ใช้ค้นหา/ติดตามสถานะ |
+| `user_id`, `vehicle_id`, `main_service_id` | อ้างอิงลูกค้า รถ และบริการหลัก |
+| `customer_name`, `customer_phone`, `car_model`, `license_plate` | สำเนาข้อมูลตอนจอง (snapshot) เพื่อไม่เปลี่ยนตามโปรไฟล์ภายหลัง |
+| `service_date`, `time_slot` | วันและช่วงเวลา (จันทร์–เสาร์ 09:00–16:00 เว้นพักเที่ยง) |
+| `main_price`, `addons_total`, `subtotal`, `vat_amount`, `total_amount` | เก็บราคา ณ วันจอง การปรับราคาในภายหลังจึงไม่กระทบการจองเดิม |
+| `status` | สถานะการจอง (ดู Enum) |
+| `cancelled_by`, `cancelled_at` | ผู้ยกเลิกและเวลา |
+| `points_earned` | แต้มที่ได้ เมื่อสถานะเป็นพร้อมรับรถแล้ว |
+
+**กฎสำคัญ:** 1 ช่วงเวลารับได้ 1 คัน ให้ตั้ง unique index บน `(service_date, time_slot)` เฉพาะแถวที่ `status <> 'cancelled'` (partial/unique index) เพื่อกันจองซ้อนกัน
+
+### 2.5 `booking_addons` – บริการเสริมในแต่ละการจอง
+ตารางเชื่อม many-to-many ระหว่าง `bookings` กับ `services` (type = addon) เก็บ `name` และ `price` ณ วันจองไว้ด้วย
+
+### 2.6 `payments` – การชำระเงิน
+แยกจาก `bookings` เพื่อรองรับกรณีสลิปไม่ผ่านแล้วลูกค้าส่งใหม่ หรือเปลี่ยนช่องทางชำระ
+
+| Column | คำอธิบาย |
+|---|---|
+| `method` | `promptpay` (QR + สลิป) หรือ `cash` (จ่ายที่ร้าน) |
+| `status` | สถานะการชำระเงิน (ดู Enum) |
+| `slip_url` | ตำแหน่งไฟล์สลิป (JPG, PNG, WEBP) |
+| `cash_reported_at` | เวลาที่ลูกค้ากด "แจ้งชำระเงินสด" |
+| `confirmed_by` | แอดมินที่กดยืนยันรับเงินสด |
+| `verified_at` | เวลายืนยันการชำระเงินจริง **หน้ารายรับใช้ฟิลด์นี้นับยอดรายวัน** ไม่ใช่วันที่นัดล้างรถ |
+
+### 2.7 `slip_checks` – ประวัติผลตรวจสลิป
+เก็บผลตรวจจากบริการตรวจสลิป ทุกครั้ง (ปุ่ม "ประวัติผลตรวจ" ของแอดมิน)
+
+| Column | คำอธิบาย |
+|---|---|
+| `is_passed` | ผ่านหรือไม่ผ่าน |
+| `reason` | เหตุผล เช่น Slip is Duplicated, ยอดไม่ตรง |
+| `reference_id`, `transaction_ref` | รหัสอ้างอิงจากผู้ให้บริการและธนาคาร ใช้ตรวจสลิปซ้ำ (`transaction_ref` ควรเป็น unique เมื่อผ่านแล้ว) |
+| `raw_response` | ผลตอบกลับดิบจาก API เก็บไว้ตรวจสอบย้อนหลัง |
+
+### 2.8 `point_transactions` – ประวัติแต้มสะสม
+บันทึกแต้มทุกครั้งที่ได้ (1 แต้มต่อทุก 25 บาท เมื่อบริการเสร็จสิ้น) ใช้แสดงในหน้า Customer Record ของแอดมิน และใช้ตรวจสอบ `users.points_balance`
+
+### 2.9 `notifications` – การแจ้งเตือน
+ไอคอนกระดิ่งของทั้งลูกค้าและแอดมิน
+
+| Column | คำอธิบาย |
+|---|---|
+| `user_id` | ผู้รับแจ้งเตือน |
+| `booking_id` | การจองที่เกี่ยวข้อง (ว่างได้) |
+| `is_read` | ใช้แสดงตัวเลขสีแดงของที่ยังไม่อ่าน |
+
+ตัวอย่างเหตุการณ์: ได้รับคำขอจอง, รับรถเข้าคิวแล้ว, กำลังให้บริการ, พร้อมรับรถแล้ว (ลูกค้า) / ยืนยันชำระเงินแล้ว, สลิปไม่ผ่าน (แอดมิน)
+
+### 2.10 `contact_messages` – ข้อความจากหน้า "ติดต่อเรา"
+| Column | คำอธิบาย |
+|---|---|
+| `subject` | สอบถามบริการ / สอบถามการจอง / แจ้งปัญหา / ข้อเสนอแนะ |
+| `attachment_url` | ไฟล์แนบ (รูปภาพหรือ PDF ไม่เกิน 5 MB) |
+| `status` | `unread` / `read` / `archived` (ยังไม่อ่าน / อ่านแล้ว / เก็บถาวร) |
+
+### 2.11 `booking_status_logs` – ประวัติการเปลี่ยนสถานะ (เสริม)
+บันทึกว่าใครเปลี่ยนสถานะการจองจากอะไรเป็นอะไร เมื่อไหร่ เพราะการกด "พร้อมรับรถ" ย้อนกลับไม่ได้ จึงควรมี log ไว้ตรวจสอบ (ถ้าไม่ต้องการ ตัด table นี้ได้)
+
+## 3. ค่า Enum
+
+**`bookings.status`**
+
+| ค่า | ความหมาย |
+|---|---|
+| `pending` | รอยืนยันการจอง |
+| `queued` | รับรถเข้าคิวแล้ว |
+| `in_service` | กำลังให้บริการ |
+| `ready` | พร้อมรับรถแล้ว (จบงาน ให้แต้มสะสม) |
+| `cancelled` | ยกเลิกการจอง |
+
+**`payments.status`**
+
+| ค่า | ความหมาย |
+|---|---|
+| `unpaid` | ยังไม่ชำระ |
+| `pending` | รอตรวจสอบ (แนบสลิปแล้ว หรือแจ้งชำระเงินสดแล้ว) |
+| `verified` | ตรวจสอบแล้ว |
+| `failed` | ไม่ผ่านการตรวจสอบ |
+
+**`payments.method`:** `promptpay`, `cash`  
+**`users.role`:** `customer`, `admin`
+
+## 4. ข้อสังเกตในการออกแบบ
+
+- **เก็บ snapshot ราคา/ข้อมูลลูกค้าใน `bookings` และ `booking_addons`** เพราะคู่มือระบุว่าราคาใหม่มีผลกับการจองใหม่เท่านั้น
+- **ไม่ลบ `services` จริง** ใช้ `is_active = false` เพื่อรักษาความสัมพันธ์กับประวัติ
+- **รายรับ** คำนวณจาก `payments` ที่ `status = 'verified'` จัดกลุ่มตาม `verified_at` และแยกตามบริการด้วย join `bookings → services` (ยอดก่อน VAT = `subtotal`, VAT = `vat_amount`)
+- **ป้องกันจองซ้ำ** ใช้ unique index บน `(service_date, time_slot)` ที่ไม่ใช่สถานะ `cancelled` และตรวจซ้ำใน transaction ตอนสร้าง/เลื่อนคิว
+- **ป้องกันสลิปซ้ำ** ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true`
+- **Index ที่ควรมี:** `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)`
+
