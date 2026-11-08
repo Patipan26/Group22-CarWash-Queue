@@ -230,6 +230,105 @@ flowchart LR
     classDef folder fill:#fff4d6,stroke:#e0a800,color:#333333,font-weight:bold
     classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333333
 ```
+| ไฟล์ / โฟลเดอร์ | คำอธิบาย |
+|---|---|
+| `.gitignore` | ระบุไฟล์ที่ไม่นำขึ้น Git เช่น `node_modules`, `.env` |
+| `.keep` | ไฟล์เปล่าสำหรับเก็บโฟลเดอร์ไว้ใน Git |
+| `docker-compose.yml` | รัน client, server และฐานข้อมูลพร้อมกันตอนพัฒนา |
+| `docker-compose.production.yml` | ตั้งค่า Docker สำหรับขึ้นระบบจริง (production) |
+| `README.md` | เอกสารอธิบายโปรเจกต์ |
+| `.github/workflows/deploy.yml` | GitHub Actions สำหรับ deploy อัตโนมัติเมื่อ push โค้ด |
+| `deploy/nginx-carwash.conf.example` | ตัวอย่างค่าตั้ง Nginx reverse proxy บนเซิร์ฟเวอร์จริง |
+
+### 💻 client — Frontend (React + Vite + Tailwind)
+| ไฟล์ / โฟลเดอร์ | คำอธิบาย |
+|---|---|
+| `client/.dockerignore` | ไฟล์ที่ไม่ใส่ใน Docker image |
+| `client/.env.example` | ตัวอย่างตัวแปรสภาพแวดล้อม เช่น URL ของ API |
+| `client/Dockerfile` | build image ฝั่งหน้าเว็บ |
+| `client/nginx.conf` | ตั้งค่า Nginx สำหรับเสิร์ฟหน้าเว็บใน container |
+| `client/index.html` | หน้า HTML หลักของแอป |
+| `client/package.json` | รายการ dependencies และ scripts |
+| `client/package-lock.json` | ล็อกเวอร์ชัน dependencies |
+| `client/vite.config.js` | ตั้งค่า Vite (build tool) |
+| `client/tailwind.config.js` | ตั้งค่า Tailwind CSS |
+| `client/postcss.config.js` | ตั้งค่า PostCSS |
+| `client/vercel.json` | ตั้งค่าการ deploy บน Vercel |
+| `client/public/images/car-wash-1~4.png` | รูปภาพประกอบหน้าเว็บ |
+| `client/public/images/cash-payment.png` | ไอคอนชำระเงินสด |
+| `client/public/images/slip2go-logo.png` | โลโก้ระบบตรวจสลิป Slip2Go |
+
+### 📁 client/src — ซอร์สโค้ดหน้าเว็บ
+| ไฟล์ / โฟลเดอร์ | คำอธิบาย |
+|---|---|
+| `src/main.jsx` | จุดเริ่มต้นของแอป React |
+| `src/App.jsx` | กำหนดเส้นทาง (routes) ของแต่ละหน้า |
+| `src/api.js` | รวมฟังก์ชันเรียก Backend API |
+| `src/auth.jsx` | จัดการสถานะการล็อกอินของผู้ใช้ |
+| `src/index.css` | สไตล์หลักและ Tailwind |
+| `src/utils/date.js` | ฟังก์ชันจัดรูปแบบวันที่และเวลา |
+| `src/components/GoogleSignInButton.jsx` | ปุ่มเข้าสู่ระบบด้วย Google |
+| `src/components/Icons.jsx` | รวมไอคอน SVG ที่ใช้ในเว็บ |
+| `src/components/Layout.jsx` | โครงหน้าเว็บ (header / footer / เมนู) |
+| `src/components/RouteGuards.jsx` | ป้องกันหน้าที่ต้องล็อกอินหรือเฉพาะ admin |
+
+### 📄 client/src/pages — หน้าต่าง ๆ ของเว็บ
+| ไฟล์ | คำอธิบาย |
+|---|---|
+| `HomePage.jsx` | หน้าแรกของเว็บไซต์ |
+| `ServicesPage.jsx` | แสดงรายการบริการและราคา |
+| `BookingPage.jsx` | เลือกบริการ วัน และเวลาเพื่อจองคิว |
+| `PaymentPage.jsx` | ชำระเงิน แนบสลิป หรือเลือกเงินสด |
+| `StatusPage.jsx` | แสดงสถานะการจอง |
+| `TrackingPage.jsx` | ติดตามคิวล้างรถ |
+| `NotificationsPage.jsx` | รายการแจ้งเตือนของผู้ใช้ |
+| `ProfilePage.jsx` | ข้อมูลโปรไฟล์และแต้มสะสม |
+| `ContactPage.jsx` | ส่งข้อความติดต่อร้านพร้อมแนบไฟล์ |
+| `AuthPage.jsx` | สมัครสมาชิก / เข้าสู่ระบบ |
+| `AdminPage.jsx` | แผงควบคุมสำหรับผู้ดูแลระบบ |
+
+### 🗄️ database — ฐานข้อมูล
+| ไฟล์ | คำอธิบาย |
+|---|---|
+| `schema.sql` | สร้างตารางทั้งหมดของระบบ |
+| `seed.sql` | ใส่ข้อมูลตั้งต้น เช่น รายการบริการ |
+| `migrations/002_booking_slot_index.sql` | เพิ่ม index ช่วงเวลาการจอง |
+| `migrations/003_google_auth.sql` | รองรับการล็อกอินด้วย Google |
+| `migrations/004_loyalty_points.sql` | เพิ่มระบบแต้มสะสม |
+| `migrations/005_profile_notifications.sql` | เพิ่มข้อมูลโปรไฟล์และการแจ้งเตือน |
+| `migrations/006_booking_in_service_status.sql` | เพิ่มสถานะ "กำลังให้บริการ" |
+| `migrations/007_payment_summary.sql` | เพิ่มข้อมูลสรุปการชำระเงิน |
+| `migrations/008_slip_verification_history.sql` | เก็บประวัติการตรวจสลิป |
+| `migrations/009_payment_timestamp.sql` | เก็บเวลาที่ชำระเงิน |
+| `migrations/010_cash_payment_method.sql` | เพิ่มวิธีชำระด้วยเงินสด |
+| `migrations/011_contact_attachment_original_name.sql` | เก็บชื่อไฟล์แนบต้นฉบับของข้อความติดต่อ |
+
+### 🖥️ server — Backend (Node.js + Express)
+| ไฟล์ / โฟลเดอร์ | คำอธิบาย |
+|---|---|
+| `server/.dockerignore` | ไฟล์ที่ไม่ใส่ใน Docker image |
+| `server/.env.example` | ตัวอย่างตัวแปร เช่น ค่าเชื่อมต่อฐานข้อมูล, secret key |
+| `server/Dockerfile` | build image ฝั่ง API |
+| `server/package.json` | รายการ dependencies และ scripts |
+| `server/package-lock.json` | ล็อกเวอร์ชัน dependencies |
+| `server/uploads/` | โฟลเดอร์เก็บไฟล์ที่ผู้ใช้อัปโหลด (`.gitkeep` ใช้เก็บโฟลเดอร์ว่างไว้ใน Git) |
+| `src/server.js` | จุดเริ่มต้นของ Express API server |
+| `src/db.js` | เชื่อมต่อฐานข้อมูล |
+| `src/middleware/auth.js` | ตรวจ token และสิทธิ์ผู้ใช้ก่อนเข้าถึง API |
+| `src/middleware/upload.js` | จัดการอัปโหลดไฟล์ทั่วไป |
+| `src/middleware/privateUpload.js` | จัดการไฟล์ส่วนตัว เช่น สลิปโอนเงิน |
+| `src/utils/filename.js` | ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัยและไม่ซ้ำกัน |
+
+### 🔌 server/src/routes — API Endpoints
+| ไฟล์ | คำอธิบาย |
+|---|---|
+| `auth.js` | สมัครสมาชิก / เข้าสู่ระบบ / ล็อกอินด้วย Google |
+| `services.js` | ข้อมูลบริการล้างรถ |
+| `bookings.js` | สร้างการจอง ดูสถานะ และชำระเงิน |
+| `profile.js` | ดูและแก้ไขข้อมูลโปรไฟล์ |
+| `notifications.js` | การแจ้งเตือนของผู้ใช้ |
+| `contacts.js` | รับข้อความติดต่อจากลูกค้า |
+| `admin.js` | API สำหรับผู้ดูแลระบบ |
 2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
 ```mermaid
 erDiagram
