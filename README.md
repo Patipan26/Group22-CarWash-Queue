@@ -905,16 +905,6 @@ flowchart TD
     B6 -.->|บันทึก| DBB
     B7 -.->|บันทึก| DBN
 
-    class A0,A1,A2,A3,A4 cust
-    class B1,B2,B3,B4,B5,B6,B7 sys
-    class DBS,DBB,DBN db
-
-    classDef cust fill:#E3F2FD,stroke:#1E88E5,color:#0D47A1
-    classDef adm fill:#F3E5F5,stroke:#8E24AA,color:#4A148C
-    classDef sys fill:#E8F5E9,stroke:#43A047,color:#1B5E20
-    classDef db fill:#FFF3E0,stroke:#FB8C00,color:#E65100
-    classDef ext fill:#ECEFF1,stroke:#546E7A,color:#263238
-
     linkStyle default interpolate stepAfter
 ```
 
@@ -952,17 +942,6 @@ flowchart TD
     B6 -.->|บันทึก| DBP
     B5 -.->|บันทึก| DBN
     B7 -.->|บันทึก| DBN
-
-    class A1,A2,A3 cust
-    class B0,B1,B2,B3,B4,B5,B6,B7 sys
-    class DBB,DBP,DBN db
-    class API ext
-
-    classDef cust fill:#E3F2FD,stroke:#1E88E5,color:#0D47A1
-    classDef adm fill:#F3E5F5,stroke:#8E24AA,color:#4A148C
-    classDef sys fill:#E8F5E9,stroke:#43A047,color:#1B5E20
-    classDef db fill:#FFF3E0,stroke:#FB8C00,color:#E65100
-    classDef ext fill:#ECEFF1,stroke:#546E7A,color:#263238
 
     linkStyle default interpolate stepAfter
 ```
@@ -1003,14 +982,6 @@ flowchart TD
     B6 -.->|บันทึก| DBU
     B7 -.->|บันทึก| DBN
 
-    class M1,M2,M3,M4,M5 adm
-    class B0,B1,B3,B4,B5,B6,B7,BC sys
-    class DBB,DBU,DBN db
-
-    classDef adm fill:#F3E5F5,stroke:#8E24AA,color:#4A148C
-    classDef sys fill:#E8F5E9,stroke:#43A047,color:#1B5E20
-    classDef db fill:#FFF3E0,stroke:#FB8C00,color:#E65100
-
     linkStyle default interpolate stepAfter
 ```
 ### ฟังก์ชันลูกค้าติดตามสถานะคิว
@@ -1047,14 +1018,6 @@ flowchart TD
     DBB[("ตารางการจอง")]
     DBB -.->|อ่าน| B1
     DBB -.->|อ่าน| B2
-
-    class C0,C1,C2,C3,C4 cust
-    class B1,B2,B3,BN,BX,BP,BW,BR,W sys
-    class DBB db
-
-    classDef cust fill:#E3F2FD,stroke:#1E88E5,color:#0D47A1
-    classDef sys fill:#E8F5E9,stroke:#43A047,color:#1B5E20
-    classDef db fill:#FFF3E0,stroke:#FB8C00,color:#E65100
 
     linkStyle default interpolate stepAfter
 ```
