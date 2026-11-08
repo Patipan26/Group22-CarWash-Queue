@@ -230,6 +230,151 @@ flowchart LR
     classDef folder fill:#fff4d6,stroke:#e0a800,color:#333333,font-weight:bold
     classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333333
 ```
+```mermaid
+flowchart TB
+
+    subgraph T1["📦 Root — โฟลเดอร์หลักของโปรเจกต์"]
+        direction TB
+        a1["<b>.gitignore</b> — ระบุไฟล์ที่ไม่นำขึ้น Git"]
+        a2["<b>.keep</b> — ไฟล์เปล่าสำหรับเก็บโฟลเดอร์"]
+        a3["<b>docker-compose.yml</b> — รันทุก service ตอนพัฒนา"]
+        a4["<b>docker-compose.production.yml</b> — ตั้งค่า Docker สำหรับ production"]
+        a5["<b>README.md</b> — เอกสารอธิบายโปรเจกต์"]
+        a1 ~~~ a2 ~~~ a3 ~~~ a4 ~~~ a5
+    end
+
+    subgraph T2["⚙️ .github/workflows และ 🌐 deploy"]
+        direction TB
+        b1["<b>.github/workflows/deploy.yml</b> — CI/CD deploy อัตโนมัติเมื่อ push"]
+        b2["<b>deploy/nginx-carwash.conf.example</b> — ตัวอย่าง Nginx reverse proxy"]
+        b1 ~~~ b2
+    end
+
+    subgraph T3["💻 client — ไฟล์ตั้งค่า Frontend"]
+        direction TB
+        c1["<b>.dockerignore</b> — ไฟล์ที่ไม่ใส่ใน Docker image"]
+        c2["<b>.env.example</b> — ตัวอย่างตัวแปรสภาพแวดล้อม"]
+        c3["<b>Dockerfile</b> — build image ฝั่งหน้าเว็บ"]
+        c4["<b>index.html</b> — หน้า HTML หลักของแอป"]
+        c5["<b>nginx.conf</b> — เสิร์ฟไฟล์เว็บใน container"]
+        c6["<b>package.json</b> — dependencies และ scripts"]
+        c7["<b>package-lock.json</b> — ล็อกเวอร์ชัน dependencies"]
+        c8["<b>postcss.config.js</b> — ตั้งค่า PostCSS"]
+        c9["<b>tailwind.config.js</b> — ตั้งค่า Tailwind CSS"]
+        c10["<b>vercel.json</b> — ตั้งค่า deploy บน Vercel"]
+        c11["<b>vite.config.js</b> — ตั้งค่า Vite build tool"]
+        c1 ~~~ c2 ~~~ c3 ~~~ c4 ~~~ c5 ~~~ c6 ~~~ c7 ~~~ c8 ~~~ c9 ~~~ c10 ~~~ c11
+    end
+
+    subgraph T4["🖼️ client/public/images — รูปภาพ"]
+        direction TB
+        d1["<b>car-wash-1 ถึง 4.png</b> — รูปประกอบหน้าเว็บ"]
+        d2["<b>cash-payment.png</b> — ไอคอนชำระเงินสด"]
+        d3["<b>slip2go-logo.png</b> — โลโก้ระบบตรวจสลิป"]
+        d1 ~~~ d2 ~~~ d3
+    end
+
+    subgraph T5["📁 client/src — ไฟล์หลักของหน้าเว็บ"]
+        direction TB
+        e1["<b>main.jsx</b> — จุดเริ่มต้นแอป React"]
+        e2["<b>App.jsx</b> — กำหนด routes ของแต่ละหน้า"]
+        e3["<b>api.js</b> — ฟังก์ชันเรียก Backend API"]
+        e4["<b>auth.jsx</b> — จัดการสถานะล็อกอิน"]
+        e5["<b>index.css</b> — สไตล์หลักและ Tailwind"]
+        e6["<b>utils/date.js</b> — จัดรูปแบบวันที่และเวลา"]
+        e1 ~~~ e2 ~~~ e3 ~~~ e4 ~~~ e5 ~~~ e6
+    end
+
+    subgraph T6["🧩 client/src/components — คอมโพเนนต์ที่ใช้ซ้ำ"]
+        direction TB
+        f1["<b>GoogleSignInButton.jsx</b> — ปุ่มเข้าสู่ระบบด้วย Google"]
+        f2["<b>Icons.jsx</b> — รวมไอคอน SVG"]
+        f3["<b>Layout.jsx</b> — โครงหน้า header / footer"]
+        f4["<b>RouteGuards.jsx</b> — ป้องกันหน้าที่ต้องล็อกอิน / admin"]
+        f1 ~~~ f2 ~~~ f3 ~~~ f4
+    end
+
+    subgraph T7["📄 client/src/pages — หน้าต่าง ๆ ของเว็บ"]
+        direction TB
+        g1["<b>HomePage.jsx</b> — หน้าแรก"]
+        g2["<b>ServicesPage.jsx</b> — รายการบริการและราคา"]
+        g3["<b>BookingPage.jsx</b> — จองคิวล้างรถ"]
+        g4["<b>PaymentPage.jsx</b> — ชำระเงิน / แนบสลิป"]
+        g5["<b>StatusPage.jsx</b> — สถานะการจอง"]
+        g6["<b>TrackingPage.jsx</b> — ติดตามคิว"]
+        g7["<b>NotificationsPage.jsx</b> — การแจ้งเตือน"]
+        g8["<b>ProfilePage.jsx</b> — โปรไฟล์และแต้มสะสม"]
+        g9["<b>ContactPage.jsx</b> — ติดต่อร้าน / แนบไฟล์"]
+        g10["<b>AuthPage.jsx</b> — สมัครสมาชิก / เข้าสู่ระบบ"]
+        g11["<b>AdminPage.jsx</b> — แผงควบคุมผู้ดูแลระบบ"]
+        g1 ~~~ g2 ~~~ g3 ~~~ g4 ~~~ g5 ~~~ g6 ~~~ g7 ~~~ g8 ~~~ g9 ~~~ g10 ~~~ g11
+    end
+
+    subgraph T8["🗄️ database — ฐานข้อมูล"]
+        direction TB
+        h1["<b>schema.sql</b> — สร้างตารางทั้งหมด"]
+        h2["<b>seed.sql</b> — ข้อมูลตั้งต้น"]
+        h1 ~~~ h2
+    end
+
+    subgraph T9["🔄 database/migrations — อัปเดตฐานข้อมูลตามลำดับ"]
+        direction TB
+        i2["<b>002_booking_slot_index.sql</b> — index ช่วงเวลาการจอง"]
+        i3["<b>003_google_auth.sql</b> — รองรับล็อกอิน Google"]
+        i4["<b>004_loyalty_points.sql</b> — ระบบแต้มสะสม"]
+        i5["<b>005_profile_notifications.sql</b> — โปรไฟล์และการแจ้งเตือน"]
+        i6["<b>006_booking_in_service_status.sql</b> — สถานะกำลังให้บริการ"]
+        i7["<b>007_payment_summary.sql</b> — สรุปข้อมูลการชำระเงิน"]
+        i8["<b>008_slip_verification_history.sql</b> — ประวัติการตรวจสลิป"]
+        i9["<b>009_payment_timestamp.sql</b> — เวลาที่ชำระเงิน"]
+        i10["<b>010_cash_payment_method.sql</b> — เพิ่มการชำระด้วยเงินสด"]
+        i11["<b>011_contact_attachment_original_name.sql</b> — เก็บชื่อไฟล์แนบต้นฉบับ"]
+        i2 ~~~ i3 ~~~ i4 ~~~ i5 ~~~ i6 ~~~ i7 ~~~ i8 ~~~ i9 ~~~ i10 ~~~ i11
+    end
+
+    subgraph T10["🖥️ server — ไฟล์ตั้งค่า Backend"]
+        direction TB
+        j1["<b>.dockerignore</b> — ไฟล์ที่ไม่ใส่ใน Docker image"]
+        j2["<b>.env.example</b> — ตัวอย่างตัวแปร เช่น DB, secret"]
+        j3["<b>Dockerfile</b> — build image ฝั่ง API"]
+        j4["<b>package.json</b> — dependencies และ scripts"]
+        j5["<b>package-lock.json</b> — ล็อกเวอร์ชัน dependencies"]
+        j6["<b>uploads/.gitkeep</b> — เก็บโฟลเดอร์ uploads ไว้ใน Git"]
+        j1 ~~~ j2 ~~~ j3 ~~~ j4 ~~~ j5 ~~~ j6
+    end
+
+    subgraph T11["📁 server/src — แกนหลักของ API"]
+        direction TB
+        k1["<b>server.js</b> — จุดเริ่มต้น Express server"]
+        k2["<b>db.js</b> — เชื่อมต่อฐานข้อมูล"]
+        k3["<b>middleware/auth.js</b> — ตรวจ token และสิทธิ์ผู้ใช้"]
+        k4["<b>middleware/upload.js</b> — อัปโหลดไฟล์ทั่วไป"]
+        k5["<b>middleware/privateUpload.js</b> — อัปโหลดไฟล์ส่วนตัว เช่น สลิป"]
+        k6["<b>utils/filename.js</b> — ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัย"]
+        k1 ~~~ k2 ~~~ k3 ~~~ k4 ~~~ k5 ~~~ k6
+    end
+
+    subgraph T12["🔌 server/src/routes — API endpoints"]
+        direction TB
+        l1["<b>auth.js</b> — สมัคร / ล็อกอิน / Google"]
+        l2["<b>services.js</b> — ข้อมูลบริการ"]
+        l3["<b>bookings.js</b> — การจองและการชำระเงิน"]
+        l4["<b>profile.js</b> — ข้อมูลโปรไฟล์ผู้ใช้"]
+        l5["<b>notifications.js</b> — การแจ้งเตือน"]
+        l6["<b>contacts.js</b> — ข้อความติดต่อ"]
+        l7["<b>admin.js</b> — API สำหรับผู้ดูแลระบบ"]
+        l1 ~~~ l2 ~~~ l3 ~~~ l4 ~~~ l5 ~~~ l6 ~~~ l7
+    end
+
+    %% จัดเรียงตารางเป็นแถว แถวละ 3 กรอบ
+    T1 ~~~ T5 ~~~ T8
+    T2 ~~~ T6 ~~~ T9
+    T3 ~~~ T7 ~~~ T10
+    T4 ~~~ T11 ~~~ T12
+
+    classDef row fill:#ffffff,stroke:#c9d6ea,color:#333333,text-align:left
+    class a1,a2,a3,a4,a5,b1,b2,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,d1,d2,d3,e1,e2,e3,e4,e5,e6,f1,f2,f3,f4,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,h1,h2,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,j1,j2,j3,j4,j5,j6,k1,k2,k3,k4,k5,k6,l1,l2,l3,l4,l5,l6,l7 row
+```
 2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
 ```mermaid
 erDiagram
