@@ -679,104 +679,62 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    G(("ผู้เยี่ยมชม"))
-    C(("ลูกค้า"))
-    A(("แอดมิน"))
+    Customer(("👤<br/>ลูกค้า"))
+    Admin(("🛠️<br/>แอดมิน"))
+    Google(("🌐<br/>Google"))
+    Slip2Go(("🧾<br/>Slip2Go"))
 
-    subgraph PUB["ใช้ได้โดยไม่ต้องเข้าสู่ระบบ"]
-        direction TB
-        P1(["ดูหน้าแรก / บริการและราคา"])
-        P2(["ติดต่อเรา + แนบไฟล์"])
-        P3(["สมัครสมาชิก / เข้าสู่ระบบ<br/>อีเมล หรือ Google"])
+    subgraph SYS["ระบบจองคิวล้างรถออนไลน์ CarWash Queue"]
+        UC1(["สมัครสมาชิก"])
+        UC2(["เข้าสู่ระบบ"])
+        UC3(["ดูบริการและราคา"])
+        UC4(["จองคิวล้างรถ"])
+        UC5(["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด"])
+        UC6(["ติดตามสถานะคิว"])
+        UC7(["เลื่อน / ยกเลิกคิว"])
+        UC8(["ดูการแจ้งเตือน"])
+        UC9(["จัดการโปรไฟล์ / รถของฉัน<br/>ดูแต้มสะสม"])
+        UC10(["ติดต่อร้าน"])
+        UC11(["ยืนยันรับเงินสด"])
+        UC12(["อัปเดตสถานะงาน"])
+        UC13(["จัดการข้อมูลลูกค้า"])
+        UC14(["จัดการบริการและราคา"])
+        UC15(["ดูรายงานรายรับ"])
+        UC16(["จัดการข้อความ"])
     end
 
-    subgraph BOOK["การจองและชำระเงิน"]
-        direction TB
-        B1(["จองคิว เลือกวัน เวลา<br/>บริการหลัก + บริการเสริม"])
-        B2(["ชำระเงิน<br/>QR พร้อมเพย์ / เงินสด / โค้ดส่วนลด"])
-    end
+    Customer --- UC1
+    Customer --- UC2
+    Customer --- UC3
+    Customer --- UC4
+    Customer --- UC5
+    Customer --- UC6
+    Customer --- UC7
+    Customer --- UC8
+    Customer --- UC9
+    Customer --- UC10
 
-    subgraph AFTER["หลังการจอง"]
-        direction TB
-        F1(["ติดตามสถานะคิว"])
-        F2(["เลื่อน / ยกเลิกคิว"])
-        F3(["การแจ้งเตือน"])
-    end
+    UC2 --- Admin
+    UC11 --- Admin
+    UC12 --- Admin
+    UC13 --- Admin
+    UC14 --- Admin
+    UC15 --- Admin
+    UC16 --- Admin
 
-    subgraph ACC["บัญชีของฉัน"]
-        direction TB
-        M1(["แก้ไขโปรไฟล์ / เปลี่ยนรหัสผ่าน"])
-        M2(["จัดการรถของฉัน"])
-        M3(["ดูแต้มสะสม"])
-    end
+    UC2 -.- Google
+    UC5 -.- Slip2Go
 
-    subgraph ADM["Admin Dashboard /admin"]
-        direction TB
-        D1(["รายการจอง<br/>ยืนยันการชำระ / อัปเดตสถานะงาน"])
-        D2(["ข้อมูลลูกค้า"])
-        D3(["บริการและราคา<br/>บริการหลัก / บริการเสริม"])
-        D4(["รายรับ"])
-        D5(["ข้อความจากลูกค้า"])
-    end
-
-    G --- PUB
-    C --- BOOK
-    C --- AFTER
-    C --- ACC
-    PUB --- A
-    ADM --- A
+    classDef actor fill:#fff,stroke:#334155,color:#000
+    classDef cus fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef adm fill:#ffedd5,stroke:#ea580c,color:#000
+    classDef both fill:#dcfce7,stroke:#16a34a,color:#000
+    class Customer,Admin,Google,Slip2Go actor
+    class UC1,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10 cus
+    class UC11,UC12,UC13,UC14,UC15,UC16 adm
+    class UC2 both
 ```
-
-
-4.2 ภาพรวมการทำงานของทั้งระบบ (Flowchart)
-
-```mermaid
-flowchart TD
-    S(["เปิดเว็บไซต์"]) --> H["หน้าแรก / บริการและราคา"]
-    H --> L{"เข้าสู่ระบบแล้วหรือยัง"}
-    L -->|"ยัง"| AU["สมัครสมาชิก / เข้าสู่ระบบ<br/>อีเมล หรือ Google"]
-    AU --> R
-    L -->|"แล้ว"| R{"role ของผู้ใช้"}
-
-    R -->|"customer"| C1["จองคิว<br/>เลือกวัน ช่วงเวลา บริการ ข้อมูลรถ"]
-    C1 --> C2["ระบบสร้างการจอง<br/>สถานะ: รอยืนยันการจอง"]
-    C2 --> C3{"เลือกวิธีชำระเงิน"}
-    C3 -->|"QR พร้อมเพย์"| C4["อัปโหลดสลิป<br/>Slip2Go ตรวจสอบอัตโนมัติ"]
-    C4 -->|"ไม่ผ่าน"| C3
-    C4 -->|"ผ่าน"| C6["ชำระเงินแล้ว"]
-    C3 -->|"เงินสด"| C5["แจ้งชำระเงินสด<br/>รอแอดมินยืนยันรับเงิน"]
-    C5 --> C6
-    C6 --> C7["ติดตามสถานะคิว<br/>อัปเดตอัตโนมัติทุก 15 วินาที"]
-    C7 --> C8{"ต้องการเปลี่ยนคิวหรือไม่"}
-    C8 -->|"เลื่อนคิว"| C9["เลือกวันเวลาใหม่"]
-    C9 --> C7
-    C8 -->|"ยกเลิก"| C10["ยกเลิกการจอง"]
-    C8 -->|"ไม่เปลี่ยน"| C11["รับรถ ได้รับแต้มสะสม"]
-
-    R -->|"admin"| A0["Admin Dashboard"]
-    A0 --> A1["รายการจอง"]
-    A1 --> A2["ยืนยันการชำระเงินสด"]
-    A2 --> A3["อัปเดตสถานะงาน<br/>รับรถเข้าคิว → กำลังให้บริการ → พร้อมรับรถ"]
-    A0 --> A4["ข้อมูลลูกค้า"]
-    A0 --> A5["บริการและราคา"]
-    A0 --> A6["รายรับ"]
-    A0 --> A7["ข้อความ"]
-
-    C10 --> E(["สิ้นสุด"])
-    C11 --> E
-    A3 --> E
-
-    classDef common fill:#dcfce7,stroke:#16a34a,color:#000
-    classDef customer fill:#dbeafe,stroke:#2563eb,color:#000
-    classDef admin fill:#ffedd5,stroke:#ea580c,color:#000
-    class H,L,AU,R common
-    class C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 customer
-    class A0,A1,A2,A3,A4,A5,A6,A7 admin
-```
-
-
-4.3 ฟังก์ชันหลักที่ 1: สมัครสมาชิก / เข้าสู่ระบบ
-
+4.2 กระบวนการของฟังก์ชันหลัก
 
 ```mermaid
 sequenceDiagram
@@ -826,8 +784,7 @@ sequenceDiagram
     end
 ```
 
-4.4 ฟังก์ชันหลักที่ 2: จองคิวและชำระเงิน
-
+ฟังก์ชันที่ 2: จองคิวและชำระเงิน
 
 ```mermaid
 sequenceDiagram
@@ -888,7 +845,7 @@ sequenceDiagram
     FE-->>C: แสดงผลการชำระเงิน
 ```
 
-4.5 ฟังก์ชันหลักที่ 3: แอดมินจัดการคิว และลูกค้าติดตามสถานะ
+3: แอดมินอัปเดตสถานะงาน และลูกค้าติดตามสถานะคิว
 
 ```mermaid
 sequenceDiagram
@@ -933,72 +890,4 @@ sequenceDiagram
         BE-->>FE: สถานะล่าสุด
         FE-->>C: แสดงสถานะ และแจ้งเตือนเมื่อสถานะเปลี่ยน
     end
-```
-
-4.6 สถานะของการจอง (State Diagram)
-
-
-```mermaid
-stateDiagram-v2
-    state "รอยืนยันการจอง<br/>pending" as pending
-    state "รับรถเข้าคิวแล้ว<br/>confirmed" as confirmed
-    state "กำลังให้บริการ<br/>in_service" as in_service
-    state "พร้อมรับรถแล้ว<br/>completed" as completed
-    state "ยกเลิกการจอง<br/>cancelled" as cancelled
-
-    [*] --> pending : ลูกค้าจองคิว
-    pending --> confirmed : แอดมินรับรถเข้าคิว (ต้องชำระเงินแล้ว)
-    confirmed --> in_service : แอดมินเริ่มให้บริการ
-    in_service --> completed : แอดมินกดพร้อมรับรถ + ให้แต้มสะสม
-    pending --> cancelled : ลูกค้า / แอดมินยกเลิก
-    confirmed --> cancelled : ลูกค้า / แอดมินยกเลิก
-    completed --> [*]
-    cancelled --> [*]
-```
-
-**สถานะการชำระเงิน**
-
-```mermaid
-stateDiagram-v2
-    state "ยังไม่ชำระ<br/>unpaid" as unpaid
-    state "รอตรวจสอบ<br/>pending_review" as pending_review
-    state "ชำระแล้ว<br/>verified" as verified
-    state "สลิปไม่ผ่าน<br/>rejected" as rejected
-
-    [*] --> unpaid : สร้างการจอง
-    unpaid --> verified : สลิปพร้อมเพย์ผ่าน Slip2Go
-    unpaid --> rejected : สลิปไม่ผ่าน Slip2Go
-    rejected --> verified : แนบสลิปใหม่และผ่าน
-    unpaid --> pending_review : เลือกชำระเงินสด
-    rejected --> pending_review : เปลี่ยนเป็นเงินสด
-    pending_review --> verified : แอดมินยืนยันรับเงิน
-    verified --> [*]
-```
-
-4.7 ฟังก์ชันเสริม: เลื่อน / ยกเลิกคิว
-
-
-```mermaid
-flowchart TD
-    A(["ลูกค้าเปิดหน้า /status"]) --> B["GET /api/bookings/me<br/>ดึงรายการจองของฉัน"]
-    B --> C["เลือกรายการจอง"]
-    C --> D{"สถานะเป็น pending หรือ confirmed<br/>และยังไม่ถึงเวลานัด"}
-    D -->|"ไม่ใช่"| E["แจ้งให้ติดต่อร้านค้า"]
-    D -->|"ใช่"| F{"ต้องการทำอะไร"}
-
-    F -->|"เลื่อนคิว"| G["เลือกวันใหม่<br/>ดูช่วงเวลาว่างจาก /availability"]
-    G --> H["PATCH /api/bookings/:code/reschedule"]
-    H --> I{"ช่วงเวลาใหม่ยังว่างหรือไม่"}
-    I -->|"เต็ม"| G
-    I -->|"ว่าง"| J["UPDATE วันและเวลาใน bookings"]
-
-    F -->|"ยกเลิกคิว"| K["PATCH /api/bookings/:code/cancel"]
-    K --> L["UPDATE status = cancelled<br/>ช่วงเวลากลับมาว่าง"]
-    L --> M{"ชำระเงินแล้วหรือไม่"}
-    M -->|"ใช่"| N["แจ้งเตือนแอดมินเรื่องคืนเงิน"]
-    M -->|"ไม่"| O["บันทึกการแจ้งเตือนให้ลูกค้า"]
-    N --> O
-    J --> O
-    O --> Z(["สิ้นสุด"])
-    E --> Z
 ```
