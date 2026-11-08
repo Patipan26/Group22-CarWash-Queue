@@ -685,6 +685,10 @@ erDiagram
 | **ป้องกันจองซ้ำ** | unique index บน `(service_date, time_slot)` ที่สถานะไม่ใช่ `cancelled` และตรวจซ้ำใน transaction ตอนสร้างหรือเลื่อนคิว |
 | **ป้องกันสลิปซ้ำ** | ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true` |
 | **Index ที่ควรมี** | `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)` |
+
+
+
+
 3) เทคโนโลยีที่ใช้ในการพัฒนา (Tech Stack)
 
 ### Frontend (`client`)
@@ -758,6 +762,9 @@ erDiagram
 | Node.js `--watch` | 20 | รีสตาร์ต Backend อัตโนมัติเมื่อแก้โค้ด (`npm run dev`) |
 | phpMyAdmin | 5.2 | ดูและแก้ข้อมูลในฐานข้อมูลตอนพัฒนา |
 | Code Editor | ⚠️ ระบุ เช่น Visual Studio Code | เขียนโค้ด |
+
+
+
 
 4) กระบวนการทำงานของระบบ (System Workflow)
 
