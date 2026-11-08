@@ -107,7 +107,100 @@ flowchart TB
     class DB,FS data
     class GOOGLE,SLIP,BANK ext
 ```
-2.3โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
+2.2 โครงสร้างโฟลเดอร์ของโปรเจกต์ แสดงเป็น tree พร้อมคำอธิบาย
+```mermaid
+flowchart LR
+    root["📁 project root<br/>ระบบจองคิวล้างรถ"]:::folder
+
+    %% ===== Root files =====
+    root --> r1["docker-compose.yml<br/>รันทุก service ตอนพัฒนา"]:::file
+    root --> r2["docker-compose.production.yml<br/>ตั้งค่า Docker สำหรับ production"]:::file
+    root --> r3["README.md<br/>เอกสารอธิบายโปรเจกต์"]:::file
+    root --> r4[".gitignore<br/>ไฟล์ที่ไม่นำขึ้น Git"]:::file
+
+    %% ===== .github =====
+    root --> gh["📁 .github/workflows<br/>CI/CD"]:::folder
+    gh --> gh1["deploy.yml<br/>deploy อัตโนมัติเมื่อ push"]:::file
+
+    %% ===== deploy =====
+    root --> dep["📁 deploy<br/>ค่าตั้งเซิร์ฟเวอร์จริง"]:::folder
+    dep --> dep1["nginx-carwash.conf.example<br/>ตัวอย่าง Nginx reverse proxy"]:::file
+
+    %% ===== database =====
+    root --> db["📁 database<br/>โครงสร้างฐานข้อมูล"]:::folder
+    db --> db1["schema.sql<br/>สร้างตารางทั้งหมด"]:::file
+    db --> db2["seed.sql<br/>ข้อมูลตั้งต้น เช่น บริการ"]:::file
+    db --> mig["📁 migrations<br/>ไฟล์อัปเดตฐานข้อมูลตามลำดับ"]:::folder
+    mig --> mig1["002 index ช่วงเวลาจอง<br/>003 ล็อกอินด้วย Google<br/>004 แต้มสะสม<br/>005 โปรไฟล์และการแจ้งเตือน<br/>006 สถานะกำลังให้บริการ<br/>007 สรุปการชำระเงิน<br/>008 ประวัติตรวจสลิป<br/>009 เวลาชำระเงิน<br/>010 ชำระด้วยเงินสด<br/>011 ชื่อไฟล์แนบต้นฉบับ"]:::file
+
+    %% ===== client =====
+    root --> cl["📁 client<br/>Frontend: React + Vite + Tailwind"]:::folder
+    cl --> c1["Dockerfile / nginx.conf<br/>build และเสิร์ฟเว็บใน container"]:::file
+    cl --> c2["vercel.json<br/>ตั้งค่า deploy บน Vercel"]:::file
+    cl --> c3["vite / tailwind / postcss config<br/>ตั้งค่า build และ CSS"]:::file
+    cl --> c4["index.html<br/>หน้า HTML หลัก"]:::file
+    cl --> c5["package.json / .env.example<br/>dependencies และตัวอย่าง env"]:::file
+    cl --> cpub["📁 public/images<br/>รูปภาพหน้าเว็บ, ไอคอนเงินสด, โลโก้ Slip2Go"]:::folder
+
+    cl --> csrc["📁 src<br/>ซอร์สโค้ดหน้าเว็บ"]:::folder
+    csrc --> s1["main.jsx<br/>จุดเริ่มต้นแอป"]:::file
+    csrc --> s2["App.jsx<br/>กำหนด routes"]:::file
+    csrc --> s3["api.js<br/>ฟังก์ชันเรียก Backend API"]:::file
+    csrc --> s4["auth.jsx<br/>จัดการสถานะล็อกอิน"]:::file
+    csrc --> s5["index.css<br/>สไตล์หลัก"]:::file
+
+    csrc --> comp["📁 components<br/>คอมโพเนนต์ที่ใช้ซ้ำ"]:::folder
+    comp --> co1["GoogleSignInButton.jsx<br/>ปุ่มล็อกอิน Google"]:::file
+    comp --> co2["Icons.jsx<br/>ชุดไอคอน"]:::file
+    comp --> co3["Layout.jsx<br/>โครงหน้า header / footer"]:::file
+    comp --> co4["RouteGuards.jsx<br/>กันหน้าที่ต้องล็อกอิน / admin"]:::file
+
+    csrc --> pages["📁 pages<br/>หน้าต่าง ๆ ของเว็บ"]:::folder
+    pages --> p1["HomePage — หน้าแรก"]:::file
+    pages --> p2["ServicesPage — รายการบริการ"]:::file
+    pages --> p3["BookingPage — จองคิว"]:::file
+    pages --> p4["PaymentPage — ชำระเงิน / แนบสลิป"]:::file
+    pages --> p5["StatusPage — สถานะการจอง"]:::file
+    pages --> p6["TrackingPage — ติดตามคิว"]:::file
+    pages --> p7["NotificationsPage — การแจ้งเตือน"]:::file
+    pages --> p8["ProfilePage — โปรไฟล์และแต้มสะสม"]:::file
+    pages --> p9["ContactPage — ติดต่อเรา"]:::file
+    pages --> p10["AuthPage — สมัคร / เข้าสู่ระบบ"]:::file
+    pages --> p11["AdminPage — แผงควบคุมผู้ดูแล"]:::file
+
+    csrc --> cut["📁 utils"]:::folder
+    cut --> cu1["date.js<br/>จัดรูปแบบวันที่และเวลา"]:::file
+
+    %% ===== server =====
+    root --> sv["📁 server<br/>Backend: Node.js + Express"]:::folder
+    sv --> sv1["Dockerfile / package.json / .env.example<br/>build, dependencies, ตัวอย่าง env"]:::file
+    sv --> upl["📁 uploads<br/>เก็บไฟล์ที่ผู้ใช้อัปโหลด"]:::folder
+
+    sv --> ssrc["📁 src"]:::folder
+    ssrc --> ss1["server.js<br/>จุดเริ่มต้น API server"]:::file
+    ssrc --> ss2["db.js<br/>เชื่อมต่อฐานข้อมูล"]:::file
+
+    ssrc --> mw["📁 middleware"]:::folder
+    mw --> mw1["auth.js<br/>ตรวจ token และสิทธิ์ผู้ใช้"]:::file
+    mw --> mw2["upload.js<br/>อัปโหลดไฟล์ทั่วไป"]:::file
+    mw --> mw3["privateUpload.js<br/>อัปโหลดไฟล์ส่วนตัว เช่น สลิป"]:::file
+
+    ssrc --> rt["📁 routes<br/>API endpoints"]:::folder
+    rt --> rt1["auth.js — สมัคร / ล็อกอิน / Google"]:::file
+    rt --> rt2["services.js — ข้อมูลบริการ"]:::file
+    rt --> rt3["bookings.js — การจองและชำระเงิน"]:::file
+    rt --> rt4["profile.js — โปรไฟล์ผู้ใช้"]:::file
+    rt --> rt5["notifications.js — การแจ้งเตือน"]:::file
+    rt --> rt6["contacts.js — ข้อความติดต่อ"]:::file
+    rt --> rt7["admin.js — API ฝั่งผู้ดูแล"]:::file
+
+    ssrc --> sut["📁 utils"]:::folder
+    sut --> su1["filename.js<br/>จัดการชื่อไฟล์อัปโหลด"]:::file
+
+    classDef folder fill:#fff4d6,stroke:#e0a800,color:#333,font-weight:bold
+    classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333
+```
+2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
 ```mermaid
 erDiagram
     USERS ||--o{ VEHICLES : "เป็นเจ้าของ"
