@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: light; }
+  body { @apply font-prompt antialiased bg-[#f4f7fb] text-slate-900; }
+  button, input, select, textarea { font-family: inherit; }
+  button, a { transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+  ::selection { @apply bg-blue-200 text-slate-900; }
+}
+
+@layer components {
+  .surface { @apply border border-slate-200/80 bg-white shadow-[0_16px_45px_-30px_rgba(15,23,42,0.45)]; }
+  .field { @apply mt-2 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-base outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:text-sm; }
+  .primary-button { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_18px_-10px_rgba(37,99,235,0.8)] hover:-translate-y-0.5 hover:bg-blue-700; }
+  .secondary-button { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:-translate-y-0.5 hover:border-blue-400 hover:text-blue-700; }
+  .eyebrow { @apply text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600; }
+}

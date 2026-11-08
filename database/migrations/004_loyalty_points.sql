@@ -1,0 +1,7 @@
+USE carwash_queue;
+
+ALTER TABLE users
+  ADD COLUMN loyalty_points INT UNSIGNED NOT NULL DEFAULT 0;
+
+ALTER TABLE bookings
+  ADD COLUMN points_awarded INT UNSIGNED NOT NULL DEFAULT 0;

@@ -1,0 +1,80 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: carwash-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-carwash_queue}
+      MYSQL_USER: ${MYSQL_USER:-carwash}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-carwash_dev_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-carwash_root_password}
+    ports:
+      - "${MYSQL_PORT:-10300}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ./server
+    container_name: carwash-api
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:${WEB_PORT:-6200}}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-carwash_queue}
+      DB_USER: ${MYSQL_USER:-carwash}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-carwash_dev_password}
+      DB_CHARSET: utf8mb4
+      BOOKING_SLOT_CAPACITY: ${BOOKING_SLOT_CAPACITY:-1}
+      JWT_SECRET: ${JWT_SECRET:-change-this-docker-secret}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      PROMPTPAY_NUMBER: ${PROMPTPAY_NUMBER:-}
+      SLIP2GO_SECRET: ${SLIP2GO_SECRET:-}
+      SLIP2GO_RECEIVER_ACCOUNT_TYPE: ${SLIP2GO_RECEIVER_ACCOUNT_TYPE:-02001}
+      SLIP2GO_RECEIVER_ACCOUNT_NUMBER: ${SLIP2GO_RECEIVER_ACCOUNT_NUMBER:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-3200}:3000"
+    volumes:
+      - uploads_data:/app/uploads
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    container_name: carwash-client
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-6200}:80"
+
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    container_name: carwash-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PHPMYADMIN_PORT:-14300}:80"
+
+volumes:
+  mysql_data:
+  uploads_data:
