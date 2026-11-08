@@ -1,17 +1,18 @@
-2) โครงสร้างของระบบ (System Architecture)
+### 2.1 แผนภาพสถาปัตยกรรมระบบ
 
-2.1 แผนภาพสถาปัตยกรรม แสดงส่วนประกอบและการเชื่อมต่อ (Client → Frontend → Backend/API → Database และบริการภายนอก)
+แสดงส่วนประกอบหลักและการเชื่อมต่อของระบบ ตั้งแต่ **Client → Frontend → Backend / API → Database** รวมถึงบริการภายนอก
+
 ```mermaid
 flowchart TB
     %% ===== Client =====
-    subgraph CLIENT["Client Layer"]
+    subgraph CLIENT["👥 Client Layer"]
         direction LR
         C1["ลูกค้า<br/>Web / Mobile Browser"]
         C2["แอดมิน<br/>Web Browser"]
     end
 
     %% ===== Frontend =====
-    subgraph FE["Frontend (Web Application)"]
+    subgraph FE["💻 Frontend (Web Application)"]
         direction TB
         subgraph FE_C["หน้าสำหรับลูกค้า"]
             F1["หน้าแรก / บริการและราคา"]
@@ -32,11 +33,11 @@ flowchart TB
     end
 
     %% ===== Backend =====
-    subgraph BE["Backend / REST API"]
+    subgraph BE["🖥️ Backend / REST API"]
         direction TB
         GW["API Gateway / Router<br/>HTTPS + Role-based Access<br/>customer / admin"]
         AUTH["Auth Service<br/>สมัคร / เข้าสู่ระบบ / เปลี่ยนรหัสผ่าน"]
-        BOOK["Booking Service<br/>ตรวจคิวว่าง 1 คัน/ช่วง<br/>จันทร์-เสาร์ 09:00-16:00"]
+        BOOK["Booking Service<br/>ตรวจคิวว่าง 1 คันต่อช่วงเวลา<br/>จันทร์-เสาร์ 09:00-16:00"]
         PAY["Payment Service<br/>VAT 7% / QR PromptPay<br/>เงินสด / ตรวจสลิป"]
         CAT["Service Catalog<br/>บริการหลัก / บริการเสริม"]
         LOYAL["Loyalty Service<br/>1 แต้มต่อ 25 บาท เมื่อบริการเสร็จ"]
@@ -46,13 +47,13 @@ flowchart TB
     end
 
     %% ===== Data =====
-    subgraph DATA["Data Layer"]
-        DB[("Database<br/>users, vehicles, bookings,<br/>services, add_ons, payments,<br/>slip_checks, points,<br/>notifications, messages")]
+    subgraph DATA["🗄️ Data Layer"]
+        DB[("Database<br/>users, vehicles, bookings,<br/>services, booking_addons, payments,<br/>slip_checks, point_transactions,<br/>notifications, contact_messages")]
         FS[("File Storage<br/>รูปสลิป / ไฟล์แนบ<br/>JPG PNG WEBP PDF ไม่เกิน 5 MB")]
     end
 
     %% ===== External =====
-    subgraph EXT["External Services"]
+    subgraph EXT["🌐 External Services"]
         GOOGLE["Google OAuth<br/>ดำเนินการต่อโดยใช้ Google"]
         SLIP["Slip Verification API<br/>ตรวจ QR บนสลิป ยอดเงิน<br/>บัญชีผู้รับ และสลิปซ้ำ"]
         BANK["แอปธนาคาร<br/>PromptPay โอนเงิน"]
@@ -75,9 +76,9 @@ flowchart TB
 
     BOOK --> CAT
     BOOK --> NOTI
+    BOOK --> LOYAL
     PAY --> BOOK
     PAY --> NOTI
-    BOOK --> LOYAL
 
     AUTH --> DB
     BOOK --> DB
@@ -94,7 +95,7 @@ flowchart TB
     AUTH <-->|OAuth 2.0| GOOGLE
     PAY <-->|ส่งรูปสลิป / รับผลตรวจ| SLIP
     C1 -.->|สแกน QR แล้วโอนเงิน| BANK
-    BANK -.->|โอนเข้าบัญชีร้าน| SLIP
+    SLIP -.->|ตรวจสอบรายการโอนกับธนาคาร| BANK
 
     classDef client fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
     classDef fe fill:#ede9fe,stroke:#7c3aed,color:#3b0764
@@ -107,7 +108,19 @@ flowchart TB
     class DB,FS data
     class GOOGLE,SLIP,BANK ext
 ```
-2.2 โครงสร้างโฟลเดอร์ของโปรเจกต์ แสดงเป็น tree พร้อมคำอธิบาย
+
+| Layer | หน้าที่ |
+|---|---|
+| **Client Layer** | ลูกค้าและแอดมินเข้าใช้งานผ่านเว็บเบราว์เซอร์ (รองรับมือถือ) |
+| **Frontend** | หน้าเว็บสำหรับลูกค้า และ Admin Dashboard ที่ `/admin` |
+| **Backend / REST API** | รับคำขอจาก Frontend ตรวจสิทธิ์ตาม role แล้วส่งต่อให้ service ที่เกี่ยวข้อง |
+| **Data Layer** | ฐานข้อมูลหลัก และที่เก็บไฟล์สลิป / ไฟล์แนบ |
+| **External Services** | Google OAuth สำหรับล็อกอิน และ Slip Verification API สำหรับตรวจสลิปโอนเงิน |
+
+---
+
+### 2.2 โครงสร้างโฟลเดอร์ของโปรเจกต์
+
 ```mermaid
 flowchart LR
     ROOT["📦 car-wash-project<br/>ระบบจองคิวล้างรถออนไลน์"]:::root
@@ -230,6 +243,9 @@ flowchart LR
     classDef folder fill:#fff4d6,stroke:#e0a800,color:#333333,font-weight:bold
     classDef file fill:#eef4ff,stroke:#6c8ebf,color:#333333
 ```
+
+#### 📦 Root
+
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
 | `.gitignore` | ระบุไฟล์ที่ไม่นำขึ้น Git เช่น `node_modules`, `.env` |
@@ -240,7 +256,8 @@ flowchart LR
 | `.github/workflows/deploy.yml` | GitHub Actions สำหรับ deploy อัตโนมัติเมื่อ push โค้ด |
 | `deploy/nginx-carwash.conf.example` | ตัวอย่างค่าตั้ง Nginx reverse proxy บนเซิร์ฟเวอร์จริง |
 
-### 💻 client — Frontend (React + Vite + Tailwind)
+#### 💻 client — Frontend (React + Vite + Tailwind)
+
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
 | `client/.dockerignore` | ไฟล์ที่ไม่ใส่ใน Docker image |
@@ -258,21 +275,23 @@ flowchart LR
 | `client/public/images/cash-payment.png` | ไอคอนชำระเงินสด |
 | `client/public/images/slip2go-logo.png` | โลโก้ระบบตรวจสลิป Slip2Go |
 
-### 📁 client/src — ซอร์สโค้ดหน้าเว็บ
+#### 📁 client/src — ซอร์สโค้ดหน้าเว็บ
+
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
-| `src/main.jsx` | จุดเริ่มต้นของแอป React |
-| `src/App.jsx` | กำหนดเส้นทาง (routes) ของแต่ละหน้า |
-| `src/api.js` | รวมฟังก์ชันเรียก Backend API |
-| `src/auth.jsx` | จัดการสถานะการล็อกอินของผู้ใช้ |
-| `src/index.css` | สไตล์หลักและ Tailwind |
-| `src/utils/date.js` | ฟังก์ชันจัดรูปแบบวันที่และเวลา |
-| `src/components/GoogleSignInButton.jsx` | ปุ่มเข้าสู่ระบบด้วย Google |
-| `src/components/Icons.jsx` | รวมไอคอน SVG ที่ใช้ในเว็บ |
-| `src/components/Layout.jsx` | โครงหน้าเว็บ (header / footer / เมนู) |
-| `src/components/RouteGuards.jsx` | ป้องกันหน้าที่ต้องล็อกอินหรือเฉพาะ admin |
+| `client/src/main.jsx` | จุดเริ่มต้นของแอป React |
+| `client/src/App.jsx` | กำหนดเส้นทาง (routes) ของแต่ละหน้า |
+| `client/src/api.js` | รวมฟังก์ชันเรียก Backend API |
+| `client/src/auth.jsx` | จัดการสถานะการล็อกอินของผู้ใช้ |
+| `client/src/index.css` | สไตล์หลักและ Tailwind |
+| `client/src/utils/date.js` | ฟังก์ชันจัดรูปแบบวันที่และเวลา |
+| `client/src/components/GoogleSignInButton.jsx` | ปุ่มเข้าสู่ระบบด้วย Google |
+| `client/src/components/Icons.jsx` | รวมไอคอน SVG ที่ใช้ในเว็บ |
+| `client/src/components/Layout.jsx` | โครงหน้าเว็บ (header / footer / เมนู) |
+| `client/src/components/RouteGuards.jsx` | ป้องกันหน้าที่ต้องล็อกอินหรือเฉพาะ admin |
 
-### 📄 client/src/pages — หน้าต่าง ๆ ของเว็บ
+#### 📄 client/src/pages — หน้าต่าง ๆ ของเว็บ
+
 | ไฟล์ | คำอธิบาย |
 |---|---|
 | `HomePage.jsx` | หน้าแรกของเว็บไซต์ |
@@ -287,11 +306,12 @@ flowchart LR
 | `AuthPage.jsx` | สมัครสมาชิก / เข้าสู่ระบบ |
 | `AdminPage.jsx` | แผงควบคุมสำหรับผู้ดูแลระบบ |
 
-### 🗄️ database — ฐานข้อมูล
+#### 🗄️ database — ฐานข้อมูล
+
 | ไฟล์ | คำอธิบาย |
 |---|---|
-| `schema.sql` | สร้างตารางทั้งหมดของระบบ |
-| `seed.sql` | ใส่ข้อมูลตั้งต้น เช่น รายการบริการ |
+| `database/schema.sql` | สร้างตารางทั้งหมดของระบบ |
+| `database/seed.sql` | ใส่ข้อมูลตั้งต้น เช่น รายการบริการ |
 | `migrations/002_booking_slot_index.sql` | เพิ่ม index ช่วงเวลาการจอง |
 | `migrations/003_google_auth.sql` | รองรับการล็อกอินด้วย Google |
 | `migrations/004_loyalty_points.sql` | เพิ่มระบบแต้มสะสม |
@@ -303,7 +323,8 @@ flowchart LR
 | `migrations/010_cash_payment_method.sql` | เพิ่มวิธีชำระด้วยเงินสด |
 | `migrations/011_contact_attachment_original_name.sql` | เก็บชื่อไฟล์แนบต้นฉบับของข้อความติดต่อ |
 
-### 🖥️ server — Backend (Node.js + Express)
+#### 🖥️ server — Backend (Node.js + Express)
+
 | ไฟล์ / โฟลเดอร์ | คำอธิบาย |
 |---|---|
 | `server/.dockerignore` | ไฟล์ที่ไม่ใส่ใน Docker image |
@@ -312,14 +333,15 @@ flowchart LR
 | `server/package.json` | รายการ dependencies และ scripts |
 | `server/package-lock.json` | ล็อกเวอร์ชัน dependencies |
 | `server/uploads/` | โฟลเดอร์เก็บไฟล์ที่ผู้ใช้อัปโหลด (`.gitkeep` ใช้เก็บโฟลเดอร์ว่างไว้ใน Git) |
-| `src/server.js` | จุดเริ่มต้นของ Express API server |
-| `src/db.js` | เชื่อมต่อฐานข้อมูล |
-| `src/middleware/auth.js` | ตรวจ token และสิทธิ์ผู้ใช้ก่อนเข้าถึง API |
-| `src/middleware/upload.js` | จัดการอัปโหลดไฟล์ทั่วไป |
-| `src/middleware/privateUpload.js` | จัดการไฟล์ส่วนตัว เช่น สลิปโอนเงิน |
-| `src/utils/filename.js` | ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัยและไม่ซ้ำกัน |
+| `server/src/server.js` | จุดเริ่มต้นของ Express API server |
+| `server/src/db.js` | เชื่อมต่อฐานข้อมูล |
+| `server/src/middleware/auth.js` | ตรวจ token และสิทธิ์ผู้ใช้ก่อนเข้าถึง API |
+| `server/src/middleware/upload.js` | จัดการอัปโหลดไฟล์ทั่วไป |
+| `server/src/middleware/privateUpload.js` | จัดการไฟล์ส่วนตัว เช่น สลิปโอนเงิน |
+| `server/src/utils/filename.js` | ตั้งชื่อไฟล์อัปโหลดให้ปลอดภัยและไม่ซ้ำกัน |
 
-### 🔌 server/src/routes — API Endpoints
+#### 🔌 server/src/routes — API Endpoints
+
 | ไฟล์ | คำอธิบาย |
 |---|---|
 | `auth.js` | สมัครสมาชิก / เข้าสู่ระบบ / ล็อกอินด้วย Google |
@@ -330,7 +352,10 @@ flowchart LR
 | `contacts.js` | รับข้อความติดต่อจากลูกค้า |
 | `admin.js` | API สำหรับผู้ดูแลระบบ |
 
-2.3 โครงสร้างฐานข้อมูล: ER Diagram และคำอธิบายแต่ละ table
+---
+
+### 2.3 โครงสร้างฐานข้อมูล (ER Diagram)
+
 ```mermaid
 erDiagram
     USERS ||--o{ VEHICLES : "เป็นเจ้าของ"
@@ -338,6 +363,8 @@ erDiagram
     USERS ||--o{ NOTIFICATIONS : "ได้รับ"
     USERS ||--o{ CONTACT_MESSAGES : "ส่ง"
     USERS ||--o{ POINT_TRANSACTIONS : "สะสม"
+    USERS ||--o{ PAYMENTS : "แอดมินยืนยัน"
+    USERS ||--o{ BOOKING_STATUS_LOGS : "ผู้เปลี่ยนสถานะ"
     VEHICLES ||--o{ BOOKINGS : "ใช้ในการจอง"
     SERVICES ||--o{ BOOKINGS : "เป็นบริการหลัก"
     SERVICES ||--o{ BOOKING_ADDONS : "เป็นบริการเสริม"
@@ -347,8 +374,6 @@ erDiagram
     BOOKINGS ||--o{ POINT_TRANSACTIONS : "ให้แต้ม"
     BOOKINGS ||--o{ BOOKING_STATUS_LOGS : "บันทึกการเปลี่ยนสถานะ"
     PAYMENTS ||--o{ SLIP_CHECKS : "ถูกตรวจสลิป"
-    USERS ||--o{ PAYMENTS : "แอดมินยืนยัน"
-    USERS ||--o{ BOOKING_STATUS_LOGS : "ผู้เปลี่ยนสถานะ"
 
     USERS {
         bigint id PK
@@ -425,7 +450,7 @@ erDiagram
         varchar slip_url "ที่เก็บรูปสลิป"
         datetime cash_reported_at "ลูกค้ากดแจ้งชำระเงินสด"
         bigint confirmed_by FK "แอดมินที่ยืนยันรับเงินสด"
-        datetime verified_at "ใช้นับรายรับตามวันนี้"
+        datetime verified_at "ใช้นับรายรับรายวัน"
         datetime created_at
     }
 
@@ -481,10 +506,27 @@ erDiagram
     }
 ```
 
-## 2. คำอธิบายแต่ละ Table
+---
 
-### 2.1 `users` – ผู้ใช้งาน
-เก็บบัญชีทั้งลูกค้าและแอดมินไว้ table เดียว แยกด้วย `role`
+### 2.4 คำอธิบายแต่ละ Table
+
+| # | Table | หน้าที่ |
+|---|---|---|
+| 1 | `users` | บัญชีผู้ใช้ทั้งลูกค้าและแอดมิน |
+| 2 | `vehicles` | รถของลูกค้า |
+| 3 | `services` | บริการหลักและบริการเสริมพร้อมราคา |
+| 4 | `bookings` | การจองคิว (ตารางหลัก) |
+| 5 | `booking_addons` | บริการเสริมในแต่ละการจอง |
+| 6 | `payments` | การชำระเงิน |
+| 7 | `slip_checks` | ประวัติผลตรวจสลิป |
+| 8 | `point_transactions` | ประวัติแต้มสะสม |
+| 9 | `notifications` | การแจ้งเตือน |
+| 10 | `contact_messages` | ข้อความจากหน้า "ติดต่อเรา" |
+| 11 | `booking_status_logs` | ประวัติการเปลี่ยนสถานะการจอง (เสริม) |
+
+#### 2.4.1 `users` — ผู้ใช้งาน
+
+เก็บบัญชีทั้งลูกค้าและแอดมินไว้ใน table เดียว แยกด้วย `role`
 
 | Column | คำอธิบาย |
 |---|---|
@@ -493,19 +535,21 @@ erDiagram
 | `password_hash` | รหัสผ่านที่เข้ารหัสแล้ว (ว่างได้ถ้าเข้าสู่ระบบด้วย Google อย่างเดียว) |
 | `google_id` | รหัสบัญชี Google สำหรับ "ดำเนินการต่อโดยใช้ Google" |
 | `role` | `customer` หรือ `admin` ใช้กำหนดสิทธิ์เข้า `/admin` |
-| `points_balance` | แต้มสะสมคงเหลือ (เก็บซ้ำเพื่อเรียกดูเร็ว ค่าจริงตรวจสอบย้อนหลังได้จาก `point_transactions`) |
+| `points_balance` | แต้มสะสมคงเหลือ (เก็บซ้ำเพื่อให้เรียกดูได้เร็ว ตรวจสอบย้อนหลังได้จาก `point_transactions`) |
 | `created_at` | วันที่เป็นสมาชิก |
 
-### 2.2 `vehicles` – ประวัติรถ
-รถที่ลูกค้าเคยจองหรือบันทึกไว้ (ปุ่ม + เพิ่มรถ ในหน้าโปรไฟล์) ลูกค้า 1 คนมีได้หลายคัน
+#### 2.4.2 `vehicles` — ประวัติรถ
+
+รถที่ลูกค้าเคยจองหรือบันทึกไว้ (ปุ่ม **+ เพิ่มรถ** ในหน้าโปรไฟล์) ลูกค้า 1 คนมีได้หลายคัน
 
 | Column | คำอธิบาย |
 |---|---|
-| `user_id` | เจ้าของรถ (FK → users) |
+| `user_id` | เจ้าของรถ (FK → `users`) |
 | `car_model` | รุ่นรถ เช่น adv150, wave125 |
 | `license_plate` | ทะเบียนรถ ใช้ค้นหาในหน้าแอดมิน |
 
-### 2.3 `services` – บริการและราคา
+#### 2.4.3 `services` — บริการและราคา
+
 เก็บทั้งบริการหลัก (Standard / Premium / Full Detailing) และบริการเสริม (เคลือบแก้ว, ขัดโคมไฟ ฯลฯ) แยกด้วย `type`
 
 | Column | คำอธิบาย |
@@ -513,74 +557,87 @@ erDiagram
 | `type` | `main` = บริการหลัก, `addon` = บริการเสริม |
 | `price` | ราคาก่อน VAT 7% |
 | `duration_minutes` | ระยะเวลาให้บริการ (ใช้กับบริการหลัก) |
-| `is_active` | เปิดให้ลูกค้าเลือกจองหรือไม่ ปุ่ม "ปิดบริการ" จะตั้งเป็น false แทนการลบ เพื่อให้ประวัติเดิมยังอ้างอิงได้ |
+| `is_active` | เปิดให้ลูกค้าเลือกจองหรือไม่ ปุ่ม "ปิดบริการ" จะตั้งค่าเป็น `false` แทนการลบ เพื่อให้ประวัติเดิมยังอ้างอิงได้ |
 
-### 2.4 `bookings` – การจอง (ตารางหลัก)
+#### 2.4.4 `bookings` — การจอง (ตารางหลัก)
+
 1 แถวต่อ 1 การจอง
 
 | Column | คำอธิบาย |
 |---|---|
-| `booking_code` | รหัสจองที่แสดงให้ลูกค้า ใช้ค้นหา/ติดตามสถานะ |
+| `booking_code` | รหัสจองที่แสดงให้ลูกค้า ใช้ค้นหาและติดตามสถานะ |
 | `user_id`, `vehicle_id`, `main_service_id` | อ้างอิงลูกค้า รถ และบริการหลัก |
-| `customer_name`, `customer_phone`, `car_model`, `license_plate` | สำเนาข้อมูลตอนจอง (snapshot) เพื่อไม่เปลี่ยนตามโปรไฟล์ภายหลัง |
+| `customer_name`, `customer_phone`, `car_model`, `license_plate` | สำเนาข้อมูลตอนจอง (snapshot) เพื่อไม่ให้เปลี่ยนตามโปรไฟล์ภายหลัง |
 | `service_date`, `time_slot` | วันและช่วงเวลา (จันทร์–เสาร์ 09:00–16:00 เว้นพักเที่ยง) |
-| `main_price`, `addons_total`, `subtotal`, `vat_amount`, `total_amount` | เก็บราคา ณ วันจอง การปรับราคาในภายหลังจึงไม่กระทบการจองเดิม |
-| `status` | สถานะการจอง (ดู Enum) |
-| `cancelled_by`, `cancelled_at` | ผู้ยกเลิกและเวลา |
-| `points_earned` | แต้มที่ได้ เมื่อสถานะเป็นพร้อมรับรถแล้ว |
+| `main_price`, `addons_total`, `subtotal`, `vat_amount`, `total_amount` | ราคา ณ วันจอง การปรับราคาภายหลังจึงไม่กระทบการจองเดิม |
+| `status` | สถานะการจอง (ดู [ค่า Enum](#25-ค่า-enum)) |
+| `cancelled_by`, `cancelled_at` | ผู้ยกเลิกและเวลาที่ยกเลิก |
+| `points_earned` | แต้มที่ได้รับเมื่อสถานะเป็น "พร้อมรับรถแล้ว" |
 
-**กฎสำคัญ:** 1 ช่วงเวลารับได้ 1 คัน ให้ตั้ง unique index บน `(service_date, time_slot)` เฉพาะแถวที่ `status <> 'cancelled'` (partial/unique index) เพื่อกันจองซ้อนกัน
+> **กฎสำคัญ:** 1 ช่วงเวลารับได้ 1 คัน ให้ตั้ง unique index บน `(service_date, time_slot)` เฉพาะแถวที่ `status <> 'cancelled'` (partial unique index) เพื่อกันการจองซ้อนกัน
 
-### 2.5 `booking_addons` – บริการเสริมในแต่ละการจอง
-ตารางเชื่อม many-to-many ระหว่าง `bookings` กับ `services` (type = addon) เก็บ `name` และ `price` ณ วันจองไว้ด้วย
+#### 2.4.5 `booking_addons` — บริการเสริมในแต่ละการจอง
 
-### 2.6 `payments` – การชำระเงิน
-แยกจาก `bookings` เพื่อรองรับกรณีสลิปไม่ผ่านแล้วลูกค้าส่งใหม่ หรือเปลี่ยนช่องทางชำระ
+ตารางเชื่อมแบบ many-to-many ระหว่าง `bookings` กับ `services` (เฉพาะ `type = addon`) และเก็บ `name` กับ `price` ณ วันจองไว้ด้วย
+
+#### 2.4.6 `payments` — การชำระเงิน
+
+แยกออกจาก `bookings` เพื่อรองรับกรณีสลิปไม่ผ่านแล้วลูกค้าส่งใหม่ หรือเปลี่ยนช่องทางชำระเงิน
 
 | Column | คำอธิบาย |
 |---|---|
 | `method` | `promptpay` (QR + สลิป) หรือ `cash` (จ่ายที่ร้าน) |
-| `status` | สถานะการชำระเงิน (ดู Enum) |
+| `status` | สถานะการชำระเงิน (ดู [ค่า Enum](#25-ค่า-enum)) |
 | `slip_url` | ตำแหน่งไฟล์สลิป (JPG, PNG, WEBP) |
 | `cash_reported_at` | เวลาที่ลูกค้ากด "แจ้งชำระเงินสด" |
 | `confirmed_by` | แอดมินที่กดยืนยันรับเงินสด |
-| `verified_at` | เวลายืนยันการชำระเงินจริง **หน้ารายรับใช้ฟิลด์นี้นับยอดรายวัน** ไม่ใช่วันที่นัดล้างรถ |
+| `verified_at` | เวลาที่ยืนยันการชำระเงินจริง — **หน้ารายรับใช้ฟิลด์นี้นับยอดรายวัน** ไม่ใช่วันที่นัดล้างรถ |
 
-### 2.7 `slip_checks` – ประวัติผลตรวจสลิป
-เก็บผลตรวจจากบริการตรวจสลิป ทุกครั้ง (ปุ่ม "ประวัติผลตรวจ" ของแอดมิน)
+#### 2.4.7 `slip_checks` — ประวัติผลตรวจสลิป
+
+เก็บผลตรวจจากบริการตรวจสลิปทุกครั้ง (ปุ่ม "ประวัติผลตรวจ" ของแอดมิน)
 
 | Column | คำอธิบาย |
 |---|---|
 | `is_passed` | ผ่านหรือไม่ผ่าน |
 | `reason` | เหตุผล เช่น Slip is Duplicated, ยอดไม่ตรง |
-| `reference_id`, `transaction_ref` | รหัสอ้างอิงจากผู้ให้บริการและธนาคาร ใช้ตรวจสลิปซ้ำ (`transaction_ref` ควรเป็น unique เมื่อผ่านแล้ว) |
+| `reference_id`, `transaction_ref` | รหัสอ้างอิงจากผู้ให้บริการและธนาคาร ใช้ตรวจสลิปซ้ำ (`transaction_ref` ควรเป็น unique เมื่อตรวจผ่านแล้ว) |
 | `raw_response` | ผลตอบกลับดิบจาก API เก็บไว้ตรวจสอบย้อนหลัง |
 
-### 2.8 `point_transactions` – ประวัติแต้มสะสม
-บันทึกแต้มทุกครั้งที่ได้ (1 แต้มต่อทุก 25 บาท เมื่อบริการเสร็จสิ้น) ใช้แสดงในหน้า Customer Record ของแอดมิน และใช้ตรวจสอบ `users.points_balance`
+#### 2.4.8 `point_transactions` — ประวัติแต้มสะสม
 
-### 2.9 `notifications` – การแจ้งเตือน
-ไอคอนกระดิ่งของทั้งลูกค้าและแอดมิน
+บันทึกแต้มทุกครั้งที่ได้รับ (1 แต้มต่อทุก 25 บาท เมื่อบริการเสร็จสิ้น) ใช้แสดงในหน้า Customer Record ของแอดมิน และใช้ตรวจสอบความถูกต้องของ `users.points_balance`
+
+#### 2.4.9 `notifications` — การแจ้งเตือน
+
+ใช้กับไอคอนกระดิ่งของทั้งลูกค้าและแอดมิน
 
 | Column | คำอธิบาย |
 |---|---|
-| `user_id` | ผู้รับแจ้งเตือน |
+| `user_id` | ผู้รับการแจ้งเตือน |
 | `booking_id` | การจองที่เกี่ยวข้อง (ว่างได้) |
-| `is_read` | ใช้แสดงตัวเลขสีแดงของที่ยังไม่อ่าน |
+| `is_read` | ใช้แสดงตัวเลขสีแดงของรายการที่ยังไม่อ่าน |
 
-ตัวอย่างเหตุการณ์: ได้รับคำขอจอง, รับรถเข้าคิวแล้ว, กำลังให้บริการ, พร้อมรับรถแล้ว (ลูกค้า) / ยืนยันชำระเงินแล้ว, สลิปไม่ผ่าน (แอดมิน)
+ตัวอย่างเหตุการณ์ที่แจ้งเตือน:
 
-### 2.10 `contact_messages` – ข้อความจากหน้า "ติดต่อเรา"
+- **ลูกค้า:** ได้รับคำขอจอง, รับรถเข้าคิวแล้ว, กำลังให้บริการ, พร้อมรับรถแล้ว
+- **แอดมิน:** ยืนยันชำระเงินแล้ว, สลิปไม่ผ่าน
+
+#### 2.4.10 `contact_messages` — ข้อความจากหน้า "ติดต่อเรา"
+
 | Column | คำอธิบาย |
 |---|---|
 | `subject` | สอบถามบริการ / สอบถามการจอง / แจ้งปัญหา / ข้อเสนอแนะ |
 | `attachment_url` | ไฟล์แนบ (รูปภาพหรือ PDF ไม่เกิน 5 MB) |
 | `status` | `unread` / `read` / `archived` (ยังไม่อ่าน / อ่านแล้ว / เก็บถาวร) |
 
-### 2.11 `booking_status_logs` – ประวัติการเปลี่ยนสถานะ (เสริม)
-บันทึกว่าใครเปลี่ยนสถานะการจองจากอะไรเป็นอะไร เมื่อไหร่ เพราะการกด "พร้อมรับรถ" ย้อนกลับไม่ได้ จึงควรมี log ไว้ตรวจสอบ (ถ้าไม่ต้องการ ตัด table นี้ได้)
+#### 2.4.11 `booking_status_logs` — ประวัติการเปลี่ยนสถานะ (เสริม)
 
-## 3. ค่า Enum
+บันทึกว่าใครเปลี่ยนสถานะการจองจากอะไรเป็นอะไร และเมื่อไหร่ เนื่องจากการกด "พร้อมรับรถ" ย้อนกลับไม่ได้ จึงควรมี log ไว้ตรวจสอบ (ถ้าไม่ต้องการ ตัด table นี้ออกได้)
+
+---
+
+### 2.5 ค่า Enum
 
 **`bookings.status`**
 
@@ -589,8 +646,20 @@ erDiagram
 | `pending` | รอยืนยันการจอง |
 | `queued` | รับรถเข้าคิวแล้ว |
 | `in_service` | กำลังให้บริการ |
-| `ready` | พร้อมรับรถแล้ว (จบงาน ให้แต้มสะสม) |
+| `ready` | พร้อมรับรถแล้ว (จบงาน และให้แต้มสะสม) |
 | `cancelled` | ยกเลิกการจอง |
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending : ลูกค้าจองคิว
+    pending --> queued : แอดมินรับรถเข้าคิว
+    queued --> in_service : เริ่มให้บริการ
+    in_service --> ready : บริการเสร็จ (ให้แต้มสะสม)
+    pending --> cancelled : ลูกค้า / แอดมินยกเลิก
+    queued --> cancelled : ลูกค้า / แอดมินยกเลิก
+    ready --> [*]
+    cancelled --> [*]
+```
 
 **`payments.status`**
 
@@ -601,15 +670,25 @@ erDiagram
 | `verified` | ตรวจสอบแล้ว |
 | `failed` | ไม่ผ่านการตรวจสอบ |
 
-**`payments.method`:** `promptpay`, `cash`  
-**`users.role`:** `customer`, `admin`
+**ค่าอื่น ๆ**
 
-## 4. ข้อสังเกตในการออกแบบ
+| Field | ค่าที่เป็นไปได้ |
+|---|---|
+| `payments.method` | `promptpay`, `cash` |
+| `users.role` | `customer`, `admin` |
+| `services.type` | `main`, `addon` |
+| `contact_messages.status` | `unread`, `read`, `archived` |
 
-- **เก็บ snapshot ราคา/ข้อมูลลูกค้าใน `bookings` และ `booking_addons`** เพราะคู่มือระบุว่าราคาใหม่มีผลกับการจองใหม่เท่านั้น
-- **ไม่ลบ `services` จริง** ใช้ `is_active = false` เพื่อรักษาความสัมพันธ์กับประวัติ
-- **รายรับ** คำนวณจาก `payments` ที่ `status = 'verified'` จัดกลุ่มตาม `verified_at` และแยกตามบริการด้วย join `bookings → services` (ยอดก่อน VAT = `subtotal`, VAT = `vat_amount`)
-- **ป้องกันจองซ้ำ** ใช้ unique index บน `(service_date, time_slot)` ที่ไม่ใช่สถานะ `cancelled` และตรวจซ้ำใน transaction ตอนสร้าง/เลื่อนคิว
-- **ป้องกันสลิปซ้ำ** ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true`
-- **Index ที่ควรมี:** `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)`
+---
+
+### 2.6 ข้อสังเกตในการออกแบบ
+
+| หัวข้อ | แนวทาง |
+|---|---|
+| **Snapshot ราคาและข้อมูลลูกค้า** | เก็บไว้ใน `bookings` และ `booking_addons` เพราะราคาใหม่มีผลกับการจองใหม่เท่านั้น |
+| **ไม่ลบบริการจริง** | ใช้ `services.is_active = false` เพื่อรักษาความสัมพันธ์กับประวัติการจอง |
+| **การคำนวณรายรับ** | ใช้ `payments` ที่ `status = 'verified'` จัดกลุ่มตาม `verified_at` และแยกตามบริการด้วยการ join `bookings → services` (ยอดก่อน VAT = `subtotal`, VAT = `vat_amount`) |
+| **ป้องกันจองซ้ำ** | unique index บน `(service_date, time_slot)` ที่สถานะไม่ใช่ `cancelled` และตรวจซ้ำใน transaction ตอนสร้างหรือเลื่อนคิว |
+| **ป้องกันสลิปซ้ำ** | ตรวจ `transaction_ref` ใน `slip_checks` ที่ `is_passed = true` |
+| **Index ที่ควรมี** | `bookings(user_id)`, `bookings(status)`, `bookings(booking_code)`, `bookings(license_plate)`, `payments(booking_id)`, `notifications(user_id, is_read)` |
 
