@@ -8,15 +8,7 @@ function getTabSessionId() {
   if (typeof window === 'undefined') return null;
   let sessionId = window.sessionStorage.getItem('carwash-tab-session-id');
   if (!sessionId) {
-    const cryptoApi = window.crypto;
-    if (cryptoApi?.randomUUID) {
-      sessionId = cryptoApi.randomUUID();
-    } else if (cryptoApi?.getRandomValues) {
-      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-      sessionId = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-    } else {
-      return null;
-    }
+    sessionId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     window.sessionStorage.setItem('carwash-tab-session-id', sessionId);
   }
   return sessionId;

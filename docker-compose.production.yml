@@ -20,7 +20,7 @@ services:
       retries: 20
 
   api:
-    image: ghcr.io/patipan26/group22-carwash-queue-api:latest
+    image: ghcr.io/patipan26/carwash-queue-api:latest
     restart: unless-stopped
     environment:
       PORT: 3000
@@ -46,7 +46,7 @@ services:
       - uploads_data:/app/uploads
 
   client:
-    image: ghcr.io/patipan26/group22-carwash-queue-client:latest
+    image: ghcr.io/patipan26/carwash-queue-client:latest
     restart: unless-stopped
     depends_on:
       - api

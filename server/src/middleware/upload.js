@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { randomBytes } = require('crypto');
 const multer = require('multer');
 
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -15,7 +14,7 @@ const storage = multer.diskStorage({
       'image/webp': '.webp',
       'application/pdf': '.pdf'
     }[file.mimetype] || '.bin';
-    cb(null, `${Date.now()}-${randomBytes(16).toString('hex')}${safeExtension}`);
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExtension}`);
   }
 });
 

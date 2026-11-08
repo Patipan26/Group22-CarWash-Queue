@@ -12,7 +12,6 @@ const profileRoutes = require('./routes/profile');
 const notificationRoutes = require('./routes/notifications');
 
 const app = express();
-app.disable('x-powered-by');
 const port = Number(process.env.PORT || 3000);
 
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', credentials: true }));

@@ -58,8 +58,8 @@ export default function Layout({ children }) {
       setNotifications(items.slice(0, 5));
       setUnreadCount(Number(data.unreadCount || 0));
     }).catch(() => undefined);
-    void loadNotifications();
-    const timer = window.setInterval(() => { void loadNotifications(); }, 10000);
+    loadNotifications();
+    const timer = window.setInterval(loadNotifications, 10000);
     return () => { active = false; window.clearInterval(timer); };
   }, [user]);
 

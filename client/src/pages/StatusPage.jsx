@@ -61,8 +61,8 @@ export default function StatusPage() {
 
   useEffect(() => {
     if (!user) return undefined;
-    void load();
-    const timer = window.setInterval(() => { void load(true); }, 15000);
+    load();
+    const timer = window.setInterval(() => load(true), 15000);
     return () => window.clearInterval(timer);
   }, [user]);
 
@@ -146,7 +146,7 @@ export default function StatusPage() {
   return <div className="mx-auto max-w-7xl px-5 py-12 md:py-16">
     <div className="mb-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <div><p className="eyebrow">My bookings</p><h1 className="mt-3 text-3xl font-bold tracking-tight text-[#0b1f3a] md:text-5xl">ประวัติการจอง</h1><p className="mt-2 text-sm text-slate-500">ตรวจสอบสถานะการรับบริการของคุณ · อัปเดตอัตโนมัติทุก 15 วินาที</p></div>
-      <button onClick={() => { void load(); }} className="secondary-button !px-3 !py-2 text-sm"><Icon name="clock" size={16} />รีเฟรช</button>
+      <button onClick={() => load()} className="secondary-button !px-3 !py-2 text-sm"><Icon name="clock" size={16} />รีเฟรช</button>
     </div>
     {error && !selected && <p role="alert" className="mb-4 text-rose-600">{error}</p>}
     {actionMessage && <p role="status" className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{actionMessage}</p>}
@@ -170,10 +170,9 @@ export default function StatusPage() {
     </div>
     <p className="mt-3 text-xs text-slate-500">แสดง {visible.length} รายการ</p>
 
-    {selected && <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button type="button" aria-label="ปิดรายละเอียด" disabled={working} onClick={() => setSelected(null)} className="absolute inset-0 cursor-default bg-slate-900/50 disabled:cursor-wait" />
-      <section role="dialog" aria-modal="true" aria-labelledby="booking-detail-title" className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <div className="flex justify-between border-b border-slate-100 pb-3"><div><p className="eyebrow">Booking details</p><h2 id="booking-detail-title" className="mt-2 font-bold">รายละเอียดการจอง</h2></div><button type="button" aria-label="ปิดรายละเอียด" onClick={() => setSelected(null)}><Icon name="close" size={18} /></button></div>
+    {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => { if (!working) setSelected(null); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="booking-detail-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex justify-between border-b border-slate-100 pb-3"><div><p className="eyebrow">Booking details</p><h2 id="booking-detail-title" className="mt-2 font-bold">รายละเอียดการจอง</h2></div><button aria-label="ปิดรายละเอียด" onClick={() => setSelected(null)}><Icon name="close" size={18} /></button></div>
         <div className="mt-4 space-y-3 text-sm"><p><b>รหัส:</b> {selected.bookingCode}</p><p><b>วันเวลา:</b> {formatThaiDate(selected.bookingDate, { withWeekday: true })} | {selected.bookingTime}</p><p><b>บริการ:</b> {selected.service}</p><p><b>บริการเสริม:</b> {selected.addons?.map((addon) => addon.name).join(', ') || 'ไม่มี'}</p><p><b>รถ:</b> {selected.carModel} / {selected.carPlate}</p><p><b>ติดต่อ:</b> {selected.customerName} / {selected.customerPhone}</p><p><b>สถานะ:</b> {labels[selected.status] || selected.status}</p><p><b>การชำระเงิน:</b> {paymentLabels[selected.paymentStatus] || selected.paymentStatus}</p></div>
         {error && <p role="alert" className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
         {isUpcoming(selected) && !rescheduleOpen && <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4"><button disabled={working} onClick={startReschedule} className="secondary-button flex-1 justify-center !py-2.5 text-sm">เลื่อนวันและเวลา</button><button disabled={working} onClick={cancelBooking} className="flex-1 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60">{working ? 'กำลังบันทึก...' : 'ยกเลิกการจอง'}</button></div>}

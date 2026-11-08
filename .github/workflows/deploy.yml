@@ -32,8 +32,8 @@ jobs:
           context: ./server
           push: true
           tags: |
-            ghcr.io/patipan26/group22-carwash-queue-api:latest
-            ghcr.io/patipan26/group22-carwash-queue-api:${{ github.sha }}
+            ghcr.io/patipan26/carwash-queue-api:latest
+            ghcr.io/patipan26/carwash-queue-api:${{ github.sha }}
 
       - name: Build and push client
         uses: docker/build-push-action@v6
@@ -43,8 +43,8 @@ jobs:
           build-args: |
             VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
           tags: |
-            ghcr.io/patipan26/group22-carwash-queue-client:latest
-            ghcr.io/patipan26/group22-carwash-queue-client:${{ github.sha }}
+            ghcr.io/patipan26/carwash-queue-client:latest
+            ghcr.io/patipan26/carwash-queue-client:${{ github.sha }}
 
   deploy:
     if: vars.APP_URL != ''
