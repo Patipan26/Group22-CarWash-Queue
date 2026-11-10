@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs/promises');
+const { randomBytes } = require('crypto');
 const pool = require('../db');
 const upload = require('../middleware/upload');
 const { authenticate } = require('../middleware/auth');
@@ -22,7 +23,7 @@ function getSlotCapacity() {
 }
 
 function makeBookingCode() {
-  return `CW${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 900 + 100)}`;
+  return `CW${Date.now().toString(36).toUpperCase()}${randomBytes(8).toString('hex').toUpperCase()}`;
 }
 
 function parseAddonIds(value) {
